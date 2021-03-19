@@ -1,0 +1,7 @@
+.idea/
+.cache/
+
+node_modules/
+dist/
+src/elm-stuff/
+
