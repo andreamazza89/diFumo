@@ -7,6 +7,7 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Events exposing (onClick)
+import Element.Input as Input
 import Html exposing (Html)
 import Node exposing (Node)
 import Port exposing (Port)
@@ -32,6 +33,8 @@ type Model
 
 type Msg
     = NodeClicked Node
+    | PortTyped Port
+    | NoOp
 
 
 view : Model -> Html Msg
@@ -43,20 +46,52 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         NodeClicked node ->
-            updateSelection model node
+            updateSelection node model
+
+        PortTyped portNumber ->
+            updatePort portNumber model
+
+        NoOp ->
+            model
 
 
-updateSelection : Model -> Node -> Model
-updateSelection model nodeSelected =
+updateSelection : Node -> Model -> Model
+updateSelection nodeSelected model =
     case model of
         NothingSelected ->
             SourceNode nodeSelected
 
         SourceNode sourceNode ->
-            Path { from = sourceNode, to = nodeSelected } 45
+            Path { from = sourceNode, to = nodeSelected } 80
 
         Path _ _ ->
-            model
+            SourceNode nodeSelected
+
+
+updatePort : Port -> Model -> Model
+updatePort portNumber model =
+    case model of
+        NothingSelected ->
+            NothingSelected
+
+        SourceNode node ->
+            SourceNode node
+
+        Path path _ ->
+            Path path portNumber
+
+
+portSelected : Model -> String
+portSelected model =
+    case model of
+        NothingSelected ->
+            "80"
+
+        SourceNode _ ->
+            "80"
+
+        Path _ overPort ->
+            String.fromInt overPort
 
 
 theWorld : Vpc -> Model -> Element Msg
@@ -92,11 +127,12 @@ theWorld vpc model =
                     [ viewVpc model vpc
                     , internetNode model
                     ]
-                , showConnectionInfo path forPort
+                , showConnectionInfo path forPort model
                 ]
 
 
-showConnectionInfo path forPort =
+showConnectionInfo : { a | from : Node, to : Node } -> Port -> Model -> Element Msg
+showConnectionInfo path forPort model =
     let
         connectivity =
             Connectivity.checkConnectivity
@@ -108,21 +144,35 @@ showConnectionInfo path forPort =
     in
     case connectivity of
         Connectivity.Possible ->
-            text ("👍 You should be able to communicate over port " ++ String.fromInt forPort)
+            column []
+                [ selectPort model
+                , text ("👍 You should be able to communicate over port " ++ String.fromInt forPort)
+                ]
 
         Connectivity.NotPossible connectionIssues ->
             column []
-                (text ("🎺 Unfortunately you cannot communicate over port " ++ String.fromInt forPort ++ " because: ")
+                (selectPort model
+                    :: text ("🎺 Unfortunately you cannot communicate over port " ++ String.fromInt forPort ++ " because: ")
                     :: viewIssues connectionIssues
                 )
 
 
-viewIssues : List Connectivity.ConnectionIssue -> List (Element msg)
+selectPort : Model -> Element Msg
+selectPort model =
+    Input.text []
+        { onChange = String.toInt >> Maybe.map PortTyped >> Maybe.withDefault NoOp
+        , text = portSelected model
+        , placeholder = Nothing
+        , label = Input.labelHidden "select-port"
+        }
+
+
+viewIssues : List Connectivity.ConnectionIssue -> List (Element Msg)
 viewIssues =
     List.map viewIssue
 
 
-viewIssue : Connectivity.ConnectionIssue -> Element msg
+viewIssue : Connectivity.ConnectionIssue -> Element Msg
 viewIssue issue =
     case issue of
         Connectivity.MissingEgressRule ->
