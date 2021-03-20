@@ -1,0 +1,143 @@
+{
+    "RouteTables": [
+        {
+            "Associations": [
+                {
+                    "Main": true,
+                    "RouteTableAssociationId": "rtbassoc-02e6a4c0d08451cfa",
+                    "RouteTableId": "rtb-0ca5500ccd19357fc",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "PropagatingVgws": [],
+            "RouteTableId": "rtb-0ca5500ccd19357fc",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "42.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                }
+            ],
+            "Tags": [],
+            "VpcId": "vpc-02a34f69639e5d566",
+            "OwnerId": "062881346168"
+        },
+        {
+            "Associations": [
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-0361d2fb151daaff6",
+                    "RouteTableId": "rtb-04d93e9f6bf4e9433",
+                    "SubnetId": "subnet-0c8587ae21dd2f18a",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                },
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-01928583a47ae5440",
+                    "RouteTableId": "rtb-04d93e9f6bf4e9433",
+                    "SubnetId": "subnet-06b385372a02a26f9",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "PropagatingVgws": [],
+            "RouteTableId": "rtb-04d93e9f6bf4e9433",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "42.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                },
+                {
+                    "DestinationCidrBlock": "0.0.0.0/0",
+                    "NatGatewayId": "nat-0bd293ef912fb8bfb",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                },
+                {
+                    "DestinationPrefixListId": "pl-6da54004",
+                    "GatewayId": "vpce-058d988a9f24d2a53",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "Oprah private route table"
+                },
+                {
+                    "Key": "env",
+                    "Value": "development"
+                },
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                }
+            ],
+            "VpcId": "vpc-02a34f69639e5d566",
+            "OwnerId": "062881346168"
+        },
+        {
+            "Associations": [
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-06f68e55e631ec8a1",
+                    "RouteTableId": "rtb-0c4deb756e5396492",
+                    "SubnetId": "subnet-0926c582dfc511c89",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                },
+                {
+                    "Main": false,
+                    "RouteTableAssociationId": "rtbassoc-00ef5b351e3c87c96",
+                    "RouteTableId": "rtb-0c4deb756e5396492",
+                    "SubnetId": "subnet-06b6493e0504e3071",
+                    "AssociationState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "PropagatingVgws": [],
+            "RouteTableId": "rtb-0c4deb756e5396492",
+            "Routes": [
+                {
+                    "DestinationCidrBlock": "42.0.0.0/16",
+                    "GatewayId": "local",
+                    "Origin": "CreateRouteTable",
+                    "State": "active"
+                },
+                {
+                    "DestinationCidrBlock": "0.0.0.0/0",
+                    "GatewayId": "igw-0bd697ec0e7462be4",
+                    "Origin": "CreateRoute",
+                    "State": "active"
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "Oprah public route table"
+                },
+                {
+                    "Key": "env",
+                    "Value": "development"
+                }
+            ],
+            "VpcId": "vpc-02a34f69639e5d566",
+            "OwnerId": "062881346168"
+        }
+    ]
+}

@@ -1,0 +1,124 @@
+{
+    "Subnets": [
+        {
+            "AvailabilityZone": "eu-west-1a",
+            "AvailabilityZoneId": "euw1-az2",
+            "AvailableIpAddressCount": 2036,
+            "CidrBlock": "42.0.0.0/21",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": false,
+            "MapCustomerOwnedIpOnLaunch": false,
+            "State": "available",
+            "SubnetId": "subnet-06b385372a02a26f9",
+            "VpcId": "vpc-02a34f69639e5d566",
+            "OwnerId": "062881346168",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                {
+                    "Key": "env",
+                    "Value": "development"
+                },
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "Oprah private subnet a"
+                }
+            ],
+            "SubnetArn": "arn:aws:ec2:eu-west-1:062881346168:subnet/subnet-06b385372a02a26f9"
+        },
+        {
+            "AvailabilityZone": "eu-west-1b",
+            "AvailabilityZoneId": "euw1-az3",
+            "AvailableIpAddressCount": 2042,
+            "CidrBlock": "42.0.24.0/21",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": true,
+            "MapCustomerOwnedIpOnLaunch": false,
+            "State": "available",
+            "SubnetId": "subnet-06b6493e0504e3071",
+            "VpcId": "vpc-02a34f69639e5d566",
+            "OwnerId": "062881346168",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "env",
+                    "Value": "development"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "Oprah public subnet b"
+                }
+            ],
+            "SubnetArn": "arn:aws:ec2:eu-west-1:062881346168:subnet/subnet-06b6493e0504e3071"
+        },
+        {
+            "AvailabilityZone": "eu-west-1a",
+            "AvailabilityZoneId": "euw1-az2",
+            "AvailableIpAddressCount": 2041,
+            "CidrBlock": "42.0.16.0/21",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": true,
+            "MapCustomerOwnedIpOnLaunch": false,
+            "State": "available",
+            "SubnetId": "subnet-0926c582dfc511c89",
+            "VpcId": "vpc-02a34f69639e5d566",
+            "OwnerId": "062881346168",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "Oprah public subnet a"
+                },
+                {
+                    "Key": "env",
+                    "Value": "development"
+                }
+            ],
+            "SubnetArn": "arn:aws:ec2:eu-west-1:062881346168:subnet/subnet-0926c582dfc511c89"
+        },
+        {
+            "AvailabilityZone": "eu-west-1b",
+            "AvailabilityZoneId": "euw1-az3",
+            "AvailableIpAddressCount": 2038,
+            "CidrBlock": "42.0.8.0/21",
+            "DefaultForAz": false,
+            "MapPublicIpOnLaunch": false,
+            "MapCustomerOwnedIpOnLaunch": false,
+            "State": "available",
+            "SubnetId": "subnet-0c8587ae21dd2f18a",
+            "VpcId": "vpc-02a34f69639e5d566",
+            "OwnerId": "062881346168",
+            "AssignIpv6AddressOnCreation": false,
+            "Ipv6CidrBlockAssociationSet": [],
+            "Tags": [
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "env",
+                    "Value": "development"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "Oprah private subnet b"
+                }
+            ],
+            "SubnetArn": "arn:aws:ec2:eu-west-1:062881346168:subnet/subnet-0c8587ae21dd2f18a"
+        }
+    ]
+}

@@ -1,0 +1,28 @@
+{
+    "InternetGateways": [
+        {
+            "Attachments": [
+                {
+                    "State": "available",
+                    "VpcId": "vpc-02a34f69639e5d566"
+                }
+            ],
+            "InternetGatewayId": "igw-0bd697ec0e7462be4",
+            "OwnerId": "062881346168",
+            "Tags": [
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "env",
+                    "Value": "development"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "Oprah internet gateway"
+                }
+            ]
+        }
+    ]
+}

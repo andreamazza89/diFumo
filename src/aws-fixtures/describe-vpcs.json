@@ -1,0 +1,36 @@
+{
+    "Vpcs": [
+        {
+            "CidrBlock": "42.0.0.0/16",
+            "DhcpOptionsId": "dopt-aac093cc",
+            "State": "available",
+            "VpcId": "vpc-02a34f69639e5d566",
+            "OwnerId": "062881346168",
+            "InstanceTenancy": "default",
+            "CidrBlockAssociationSet": [
+                {
+                    "AssociationId": "vpc-cidr-assoc-0911856de589dc8ba",
+                    "CidrBlock": "42.0.0.0/16",
+                    "CidrBlockState": {
+                        "State": "associated"
+                    }
+                }
+            ],
+            "IsDefault": false,
+            "Tags": [
+                {
+                    "Key": "env",
+                    "Value": "development"
+                },
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "Oprah VPC"
+                }
+            ]
+        }
+    ]
+}

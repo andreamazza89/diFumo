@@ -1,0 +1,278 @@
+{
+    "SecurityGroups": [
+        {
+            "Description": "default VPC security group",
+            "GroupName": "default",
+            "IpPermissions": [],
+            "OwnerId": "062881346168",
+            "GroupId": "sg-049f623e368dd4e98",
+            "IpPermissionsEgress": [],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20200515152731786100000001",
+            "IpPermissions": [
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "062881346168",
+            "GroupId": "sg-06ddd2ab91bc0de9a",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 8080,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "42.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 8080,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "env",
+                    "Value": "development"
+                }
+            ],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "antivirus-api",
+            "IpPermissions": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0977fe939bab81b7a",
+                            "UserId": "062881346168"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "062881346168",
+            "GroupId": "sg-0977fe939bab81b7a",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-0977fe939bab81b7a",
+                            "UserId": "062881346168"
+                        }
+                    ]
+                }
+            ],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "bastion",
+            "IpPermissions": [],
+            "OwnerId": "062881346168",
+            "GroupId": "sg-09f397e7063d1df77",
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "42.0.0.0/16",
+                            "Description": "Allow outbound traffic within the VPC"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [
+                        {
+                            "Description": "Allow outbound traffic to the VPC endpoints",
+                            "PrefixListId": "pl-6da54004"
+                        }
+                    ],
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "mrdp-oprah-ecs-backend-service-security-group-development",
+            "IpPermissions": [
+                {
+                    "FromPort": 8080,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "42.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 8080,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "062881346168",
+            "GroupId": "sg-0c67182082dfb4836",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 80,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 80,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": []
+                },
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "Name",
+                    "Value": "Oprah fargate backend service security group"
+                },
+                {
+                    "Key": "env",
+                    "Value": "development"
+                },
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                }
+            ],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "terraform-20200129154733212400000001",
+            "IpPermissions": [
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "42.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "062881346168",
+            "GroupId": "sg-0e6877f983f64501c",
+            "IpPermissionsEgress": [
+                {
+                    "FromPort": 5432,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "42.0.0.0/16"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 5432,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "Tags": [
+                {
+                    "Key": "env",
+                    "Value": "development"
+                },
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "Oprah database security group"
+                }
+            ],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Description": "Managed by Terraform",
+            "GroupName": "vpc_interface_endpoints",
+            "IpPermissions": [
+                {
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "42.0.0.0/16",
+                            "Description": "Allow ingress from within VPC to VPC Endpoints"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 443,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "062881346168",
+            "GroupId": "sg-0fa2e35964a5a56d9",
+            "IpPermissionsEgress": [],
+            "VpcId": "vpc-02a34f69639e5d566"
+        }
+    ]
+}
