@@ -1,4 +1,4 @@
-module Connectivity exposing (checkConnectivity)
+module Connectivity exposing (ConnectionIssue(..), Connectivity(..), checkConnectivity)
 
 ---- Connectivity
 

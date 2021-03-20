@@ -1,4 +1,4 @@
-module Protocol exposing (Protocol)
+module Protocol exposing (Protocol(..))
 
 
 type Protocol

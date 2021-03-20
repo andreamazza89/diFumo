@@ -2,6 +2,7 @@ module Node.Ec2 exposing
     ( Ec2
     , allowsEgress
     , build
+    , equals
     , hasInternetRoute
     , idAsString
     , ipAddress
@@ -34,6 +35,11 @@ type Ec2Id
     = Ec2Id String
 
 
+equals : Ec2 -> Ec2 -> Bool
+equals ec2 otherEc2 =
+    id ec2 == id otherEc2
+
+
 ipAddress : Ec2 -> IpAddress
 ipAddress (Ec2 ec2_) =
     ec2_.privateIp
@@ -44,9 +50,14 @@ securityGroups (Ec2 ec2_) =
     ec2_.securityGroups
 
 
+id : Ec2 -> Ec2Id
+id (Ec2 ec2_) =
+    ec2_.id
+
+
 idAsString : Ec2 -> String
-idAsString (Ec2 { id }) =
-    case id of
+idAsString ec2 =
+    case id ec2 of
         Ec2Id id_ ->
             id_
 
@@ -66,9 +77,9 @@ allowsEgress target ec2 =
 
 
 build : String -> List SecurityGroup -> RouteTable -> IpAddress -> Ec2
-build id groups routeTable privateIp =
+build id_ groups routeTable privateIp =
     Ec2
-        { id = Ec2Id id
+        { id = Ec2Id id_
         , securityGroups = groups
         , routeTable = routeTable
         , privateIp = privateIp

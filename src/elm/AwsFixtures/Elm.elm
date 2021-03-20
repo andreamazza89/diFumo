@@ -1,5 +1,6 @@
-module AwsFixtures.Elm exposing (myVpc)
+module AwsFixtures.Elm exposing (instance, myVpc)
 
+import Cidr
 import IpAddress
 import Node exposing (Node)
 import Vpc exposing (Vpc)
@@ -38,3 +39,4 @@ instance n =
 securityGroup : SecurityGroup
 securityGroup =
     SecurityGroup.build "Made up Security Group"
+        [ { fromPort = 44, toPort = 55, cidr = Cidr.range 22 22 22 22 16 } ]

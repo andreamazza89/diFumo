@@ -27,7 +27,7 @@ type Rule
         { forProtocol : Protocol
         , fromPort : Port
         , toPort : Port
-        , ipRange : Cidr
+        , cidr : Cidr
         }
 
 
@@ -45,7 +45,7 @@ allowsEgress target (SecurityGroup { egress }) =
 
 ruleMatches : Target -> Rule -> Bool
 ruleMatches target (Rule rule_) =
-    Cidr.contains target.toIp rule_.ipRange
+    Cidr.contains target.toIp rule_.cidr
         && (target.forProtocol == rule_.forProtocol)
         && (target.overPort >= rule_.fromPort && target.overPort <= rule_.toPort)
 
@@ -54,9 +54,18 @@ ruleMatches target (Rule rule_) =
 -- Builder
 
 
-build : String -> SecurityGroup
-build description =
+build : String -> List { fromPort : Port, toPort : Port, cidr : Cidr } -> SecurityGroup
+build description egress =
     SecurityGroup
         { description = description
-        , egress = []
+        , egress = List.map toRule egress
+        }
+
+
+toRule { fromPort, toPort, cidr } =
+    Rule
+        { forProtocol = Protocol.Tcp
+        , fromPort = fromPort
+        , toPort = toPort
+        , cidr = cidr
         }

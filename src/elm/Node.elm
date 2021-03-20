@@ -2,8 +2,10 @@ module Node exposing
     ( Node
     , allowsEgress
     , buildEc2
+    , equals
     , hasInternetRoute
     , idAsString
+    , internet
     , isInternet
     )
 
@@ -26,6 +28,19 @@ type Node
 
 
 -- Query
+
+
+equals : Node -> Node -> Bool
+equals node otherNode =
+    case ( node, otherNode ) of
+        ( Internet, Internet ) ->
+            True
+
+        ( Ec2 ec2, Ec2 otherEc2 ) ->
+            Ec2.equals ec2 otherEc2
+
+        _ ->
+            False
 
 
 ipAddress : Node -> IpAddress
@@ -92,3 +107,8 @@ hasInternetRoute toNode =
 buildEc2 : String -> List SecurityGroup -> RouteTable -> IpAddress -> Node
 buildEc2 id securityGroups routeTable ipAddress_ =
     Ec2 (Ec2.build id securityGroups routeTable ipAddress_)
+
+
+internet : Node
+internet =
+    Internet
