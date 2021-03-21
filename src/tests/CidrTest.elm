@@ -17,6 +17,26 @@ suite =
             \_ ->
                 cidr [ 1, 1, 1, 1 ] 32
                     |> doesNotContain [ 1, 2, 3, 4 ]
+        , test "Matching on a wider range (address is at the beginning of the range)" <|
+            \_ ->
+                cidr [ 10, 0, 0, 0 ] 16
+                    |> contains [ 10, 0, 0, 0 ]
+        , test "Matching on a wider range (address is within range)" <|
+            \_ ->
+                cidr [ 10, 0, 0, 0 ] 16
+                    |> contains [ 10, 0, 111, 33 ]
+        , test "Matching on a wider range (address is at the end of the range)" <|
+            \_ ->
+                cidr [ 10, 0, 0, 0 ] 16
+                    |> contains [ 10, 0, 255, 255 ]
+        , test "Matching on a wider range (address is above the range)" <|
+            \_ ->
+                cidr [ 10, 0, 0, 0 ] 16
+                    |> doesNotContain [ 10, 1, 0, 0 ]
+        , test "Matching on a wider range (address is below the range)" <|
+            \_ ->
+                cidr [ 10, 0, 0, 0 ] 16
+                    |> doesNotContain [ 9, 255, 255, 255 ]
         ]
 
 
@@ -44,7 +64,7 @@ doesNotContain address cidr_ =
 
 doesNotContain_ : Cidr -> IpAddress.Ipv4Address -> Expect.Expectation
 doesNotContain_ cidr_ address =
-    Expect.false "some msg" (Cidr.contains address cidr_)
+    Expect.false "Given address was NOT expected to be contained in given cidr" (Cidr.contains address cidr_)
 
 
 contains : List Int -> Maybe Cidr -> Expect.Expectation
@@ -55,4 +75,4 @@ contains address cidr_ =
 
 contains_ : Cidr -> IpAddress.Ipv4Address -> Expect.Expectation
 contains_ cidr_ address =
-    Expect.true "some msg" (Cidr.contains address cidr_)
+    Expect.true "Given address was expected to be contained in given cidr but was NOT" (Cidr.contains address cidr_)

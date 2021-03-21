@@ -1,4 +1,4 @@
-module IpAddress exposing (Ipv4Address, buildV4)
+module IpAddress exposing (Ipv4Address, buildV4, isBetween, plus)
 
 
 type Ipv4Address
@@ -21,3 +21,15 @@ buildV4 a b c d =
 numberIsWithinRange : number -> Bool
 numberIsWithinRange n =
     n >= 0 && n <= 255
+
+
+isBetween : Ipv4Address -> Ipv4Address -> Ipv4Address -> Bool
+isBetween (Ipv4Address lower) (Ipv4Address upper) (Ipv4Address address) =
+    address >= lower && address <= upper
+
+
+plus : Ipv4Address -> Int -> Ipv4Address
+plus (Ipv4Address address) number =
+    -- this is slightly dangerous as it could return an invalid ip address (e.g. 255.255.255.255 + 1), but the
+    -- likelihood of it happening vs the ergonomics of making this Maybe made me leave it as 'dangerous'
+    Ipv4Address (address + number - 1)
