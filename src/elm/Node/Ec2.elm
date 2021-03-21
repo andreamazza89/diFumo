@@ -24,9 +24,9 @@ import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 
 type Ec2
     = Ec2
-        { securityGroups : List SecurityGroup -- make nonempty
+        { securityGroups : List SecurityGroup -- make nonempty -- maybe this should be lifted to the Node level, as any node has one or more security groups
         , id : Ec2Id
-        , routeTable : RouteTable
+        , routeTable : RouteTable -- maybe this should be lifted to the Node level, as any node has one route table
         , privateIp : Ipv4Address
         }
 

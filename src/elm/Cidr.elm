@@ -1,4 +1,4 @@
-module Cidr exposing (Cidr, SubnetMask, build, contains)
+module Cidr exposing (Cidr, SubnetMask, build, contains, madeUpRange)
 
 import IpAddress exposing (Ipv4Address)
 
@@ -44,3 +44,8 @@ build mask address =
 
     else
         Nothing
+
+
+madeUpRange : Cidr
+madeUpRange =
+    Cidr IpAddress.madeUpV4 24

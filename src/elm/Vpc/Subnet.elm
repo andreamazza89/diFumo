@@ -1,6 +1,8 @@
 module Vpc.Subnet exposing
-    ( Subnet
+    ( Id
+    , Subnet
     , build
+    , buildId
     , idAsString
     , nodes
     )
@@ -13,12 +15,12 @@ import Node exposing (Node)
 type Subnet
     = Subnet
         { nodes : List Node
-        , id : SubnetId
+        , id : Id
         }
 
 
-type SubnetId
-    = SubnetId String
+type Id
+    = Id String
 
 
 nodes : Subnet -> List Node
@@ -29,7 +31,7 @@ nodes (Subnet subnet_) =
 idAsString : Subnet -> String
 idAsString (Subnet { id }) =
     case id of
-        SubnetId id_ ->
+        Id id_ ->
             id_
 
 
@@ -39,4 +41,9 @@ idAsString (Subnet { id }) =
 
 build : String -> List Node -> Subnet
 build id nodes_ =
-    Subnet { id = SubnetId id, nodes = nodes_ }
+    Subnet { id = Id id, nodes = nodes_ }
+
+
+buildId : String -> Id
+buildId id_ =
+    Id id_

@@ -1,6 +1,8 @@
 module Vpc exposing
-    ( Vpc
+    ( Id
+    , Vpc
     , build
+    , buildId
     , idAsString
     , subnets
     )
@@ -13,12 +15,12 @@ import Vpc.Subnet exposing (Subnet)
 type Vpc
     = Vpc
         { subnets : List Subnet
-        , id : VpcId
+        , id : Id
         }
 
 
-type VpcId
-    = VpcId String
+type Id
+    = Id String
 
 
 subnets : Vpc -> List Subnet
@@ -29,7 +31,7 @@ subnets (Vpc vpc_) =
 idAsString : Vpc -> String
 idAsString (Vpc { id }) =
     case id of
-        VpcId id_ ->
+        Id id_ ->
             id_
 
 
@@ -39,4 +41,9 @@ idAsString (Vpc { id }) =
 
 build : String -> List Subnet -> Vpc
 build id subnets_ =
-    Vpc { id = VpcId id, subnets = subnets_ }
+    Vpc { id = Id id, subnets = subnets_ }
+
+
+buildId : String -> Id
+buildId id_ =
+    Id id_

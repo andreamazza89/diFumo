@@ -2,6 +2,7 @@ module Node exposing
     ( Node
     , allowsEgress
     , buildEc2
+    , buildEc2Temp
     , equals
     , hasInternetRoute
     , idAsString
@@ -48,7 +49,7 @@ ipv4Address node =
     case node of
         Internet ->
             -- this is some random address; perhaps we should build Internet node eliciting an address form the user?
-            IpAddress.buildV4 104 198 14 52
+            IpAddress.madeUpV4
 
         Ec2 ec2 ->
             Ec2.ipAddress ec2
@@ -107,6 +108,11 @@ hasInternetRoute toNode =
 buildEc2 : String -> List SecurityGroup -> RouteTable -> Ipv4Address -> Node
 buildEc2 id securityGroups routeTable ipAddress_ =
     Ec2 (Ec2.build id securityGroups routeTable ipAddress_)
+
+
+buildEc2Temp : a -> Node
+buildEc2Temp _ =
+    Debug.todo "hi, please do this"
 
 
 internet : Node

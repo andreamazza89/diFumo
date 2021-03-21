@@ -33,10 +33,10 @@ instance n =
     Node.buildEc2 ("i-09af59bfa9c2" ++ n ++ "a8ea")
         [ securityGroup ]
         RouteTable.build
-        (IpAddress.buildV4 42 42 42 42)
+        IpAddress.madeUpV4
 
 
 securityGroup : SecurityGroup
 securityGroup =
     SecurityGroup.build "Made up Security Group"
-        [ { fromPort = 44, toPort = 55, cidr = Cidr.range 22 22 22 22 16 } ]
+        [ { fromPort = 44, toPort = 55, cidr = Cidr.madeUpRange } ]

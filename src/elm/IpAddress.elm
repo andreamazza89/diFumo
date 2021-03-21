@@ -1,4 +1,4 @@
-module IpAddress exposing (Ipv4Address, buildV4, isBetween, plus)
+module IpAddress exposing (Ipv4Address, buildV4, isBetween, madeUpV4, plus)
 
 
 type Ipv4Address
@@ -7,6 +7,11 @@ type Ipv4Address
 
 
 -- Builder
+
+
+madeUpV4 : Ipv4Address
+madeUpV4 =
+    Ipv4Address 167772160
 
 
 buildV4 : Int -> Int -> Int -> Int -> Maybe Ipv4Address
