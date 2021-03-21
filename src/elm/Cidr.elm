@@ -1,4 +1,4 @@
-module Cidr exposing (Cidr, build, contains)
+module Cidr exposing (Cidr, SubnetMask, build, contains)
 
 import IpAddress exposing (Ipv4Address)
 
