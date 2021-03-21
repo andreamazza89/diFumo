@@ -1,4 +1,4 @@
-module Cidr exposing (Cidr, contains, range)
+module Cidr exposing (Cidr, build, contains)
 
 import IpAddress exposing (Ipv4Address)
 
@@ -13,9 +13,18 @@ type alias SubnetMask =
 
 contains : Ipv4Address -> Cidr -> Bool
 contains ipAddress cidr =
-    True
+    ipAddress == firstIpInRange cidr
 
 
-range : Int -> Int -> Int -> Int -> SubnetMask -> Cidr
-range a b c d mask =
-    Cidr (IpAddress.buildV4 a b c d) mask
+firstIpInRange : Cidr -> Ipv4Address
+firstIpInRange (Cidr ipAddress _) =
+    ipAddress
+
+
+build : SubnetMask -> Ipv4Address -> Maybe Cidr
+build mask address =
+    if mask > 0 && mask <= 32 then
+        Just (Cidr address mask)
+
+    else
+        Nothing
