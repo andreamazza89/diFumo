@@ -1,4 +1,4 @@
-module Connectivity exposing (ConnectionIssue(..), Connectivity(..), checkConnectivity)
+module Connectivity exposing (ConnectionIssue(..), Connectivity(..), check)
 
 ---- Connectivity
 
@@ -45,8 +45,8 @@ type alias ConnectivityContext =
     }
 
 
-checkConnectivity : ConnectivityContext -> Connectivity
-checkConnectivity context =
+check : ConnectivityContext -> Connectivity
+check context =
     checkInternet context
         |> combineWith (checkEgressRules context)
 

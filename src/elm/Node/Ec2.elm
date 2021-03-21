@@ -9,7 +9,7 @@ module Node.Ec2 exposing
     , securityGroups
     )
 
-import IpAddress exposing (IpAddress)
+import IpAddress exposing (Ipv4Address)
 import Vpc.RouteTable exposing (RouteTable)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 
@@ -24,10 +24,10 @@ import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 
 type Ec2
     = Ec2
-        { securityGroups : List SecurityGroup
+        { securityGroups : List SecurityGroup -- make nonempty
         , id : Ec2Id
         , routeTable : RouteTable
-        , privateIp : IpAddress
+        , privateIp : Ipv4Address
         }
 
 
@@ -40,7 +40,7 @@ equals ec2 otherEc2 =
     id ec2 == id otherEc2
 
 
-ipAddress : Ec2 -> IpAddress
+ipAddress : Ec2 -> Ipv4Address
 ipAddress (Ec2 ec2_) =
     ec2_.privateIp
 
@@ -76,7 +76,7 @@ allowsEgress target ec2 =
 -- Builders
 
 
-build : String -> List SecurityGroup -> RouteTable -> IpAddress -> Ec2
+build : String -> List SecurityGroup -> RouteTable -> Ipv4Address -> Ec2
 build id_ groups routeTable privateIp =
     Ec2
         { id = Ec2Id id_

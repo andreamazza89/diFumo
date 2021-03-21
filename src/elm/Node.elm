@@ -9,7 +9,7 @@ module Node exposing
     , isInternet
     )
 
-import IpAddress exposing (IpAddress)
+import IpAddress exposing (Ipv4Address)
 import Node.Ec2 as Ec2 exposing (Ec2)
 import Port exposing (Port)
 import Protocol exposing (Protocol)
@@ -43,12 +43,12 @@ equals node otherNode =
             False
 
 
-ipAddress : Node -> IpAddress
-ipAddress node =
+ipv4Address : Node -> Ipv4Address
+ipv4Address node =
     case node of
         Internet ->
             -- this is some random address; perhaps we should build Internet node eliciting an address form the user?
-            IpAddress.build 104 198 14 52
+            IpAddress.buildV4 104 198 14 52
 
         Ec2 ec2 ->
             Ec2.ipAddress ec2
@@ -83,7 +83,7 @@ allowsEgress node toNode forProtocol overPort =
 
         Ec2 ec2 ->
             Ec2.allowsEgress
-                { toIp = ipAddress toNode
+                { toIp = ipv4Address toNode
                 , forProtocol = forProtocol
                 , overPort = overPort
                 }
@@ -104,7 +104,7 @@ hasInternetRoute toNode =
 -- Builders
 
 
-buildEc2 : String -> List SecurityGroup -> RouteTable -> IpAddress -> Node
+buildEc2 : String -> List SecurityGroup -> RouteTable -> Ipv4Address -> Node
 buildEc2 id securityGroups routeTable ipAddress_ =
     Ec2 (Ec2.build id securityGroups routeTable ipAddress_)
 

@@ -1,21 +1,21 @@
 module Cidr exposing (Cidr, contains, range)
 
-import IpAddress exposing (IpAddress)
+import IpAddress exposing (Ipv4Address)
 
 
 type Cidr
-    = Cidr IpAddress SubnetMask
+    = Cidr Ipv4Address SubnetMask
 
 
 type alias SubnetMask =
     Int
 
 
-contains : IpAddress -> Cidr -> Bool
+contains : Ipv4Address -> Cidr -> Bool
 contains ipAddress cidr =
     True
 
 
 range : Int -> Int -> Int -> Int -> SubnetMask -> Cidr
 range a b c d mask =
-    Cidr (IpAddress.build a b c d) mask
+    Cidr (IpAddress.buildV4 a b c d) mask

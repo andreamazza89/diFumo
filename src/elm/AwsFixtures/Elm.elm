@@ -33,7 +33,7 @@ instance n =
     Node.buildEc2 ("i-09af59bfa9c2" ++ n ++ "a8ea")
         [ securityGroup ]
         RouteTable.build
-        (IpAddress.build 42 42 42 42)
+        (IpAddress.buildV4 42 42 42 42)
 
 
 securityGroup : SecurityGroup

@@ -135,7 +135,7 @@ showConnectionInfo : { a | from : Node, to : Node } -> Port -> Model -> Element 
 showConnectionInfo path forPort model =
     let
         connectivity =
-            Connectivity.checkConnectivity
+            Connectivity.check
                 { fromNode = path.from
                 , toNode = path.to
                 , forProtocol = Protocol.Tcp

@@ -1,14 +1,23 @@
-module IpAddress exposing (IpAddress, build)
+module IpAddress exposing (Ipv4Address, buildV4)
 
 
-type IpAddress
-    = IpAddress Int Int Int Int
+type Ipv4Address
+    = Ipv4Address Int
 
 
 
 -- Builder
 
 
-build : Int -> Int -> Int -> Int -> IpAddress
-build =
-    IpAddress
+buildV4 : Int -> Int -> Int -> Int -> Maybe Ipv4Address
+buildV4 a b c d =
+    if numberIsWithinRange a && numberIsWithinRange b && numberIsWithinRange c && numberIsWithinRange d then
+        Just (Ipv4Address (d + (256 * c) + ((256 ^ 2) * b) + ((256 ^ 3) * a)))
+
+    else
+        Nothing
+
+
+numberIsWithinRange : number -> Bool
+numberIsWithinRange n =
+    n >= 0 && n <= 255

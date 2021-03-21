@@ -6,7 +6,7 @@ module Vpc.SecurityGroup exposing
     )
 
 import Cidr exposing (Cidr)
-import IpAddress exposing (IpAddress)
+import IpAddress exposing (Ipv4Address)
 import Port exposing (Port)
 import Protocol exposing (Protocol)
 
@@ -32,7 +32,7 @@ type Rule
 
 
 type alias Target =
-    { toIp : IpAddress
+    { toIp : Ipv4Address
     , forProtocol : Protocol
     , overPort : Port
     }
