@@ -105,9 +105,9 @@ hasInternetRoute toNode =
 -- Builders
 
 
-buildEc2 : String -> List SecurityGroup -> RouteTable -> Ipv4Address -> Node
-buildEc2 id securityGroups routeTable ipAddress_ =
-    Ec2 (Ec2.build id securityGroups routeTable ipAddress_)
+buildEc2 : Ec2.Config -> Node
+buildEc2 config =
+    Ec2 (Ec2.build2 config)
 
 
 buildEc2Temp : a -> Node

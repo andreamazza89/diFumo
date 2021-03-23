@@ -4,7 +4,6 @@ import Cidr
 import IpAddress
 import Node exposing (Node)
 import Vpc exposing (Vpc)
-import Vpc.RouteTable as RouteTable
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
@@ -30,10 +29,11 @@ subnetTwo =
 
 instance : String -> Node
 instance n =
-    Node.buildEc2 ("i-09af59bfa9c2" ++ n ++ "a8ea")
-        [ securityGroup ]
-        RouteTable.build
-        IpAddress.madeUpV4
+    Node.buildEc2
+        { id = "i-09af59bfa9c2" ++ n ++ "a8ea"
+        , securityGroups = [ securityGroup ]
+        , privateIp = IpAddress.madeUpV4
+        }
 
 
 securityGroup : SecurityGroup

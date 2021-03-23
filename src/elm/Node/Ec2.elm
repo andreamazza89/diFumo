@@ -1,7 +1,9 @@
 module Node.Ec2 exposing
-    ( Ec2
+    ( Config
+    , Ec2
     , allowsEgress
     , build
+    , build2
     , equals
     , hasInternetRoute
     , idAsString
@@ -24,9 +26,10 @@ import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 
 type Ec2
     = Ec2
-        { securityGroups : List SecurityGroup -- make nonempty -- maybe this should be lifted to the Node level, as any node has one or more security groups
+        { securityGroups : List SecurityGroup -- make nonempty -- maybe this should be lifted to the Node level, as any node other than the Internet has one or more security groups
         , id : Ec2Id
-        , routeTable : RouteTable -- maybe this should be lifted to the Node level, as any node has one route table
+
+        --, routeTable : RouteTable -- maybe this should be lifted to the Node level, as any node other than the Internet has one route table
         , privateIp : Ipv4Address
         }
 
@@ -81,6 +84,21 @@ build id_ groups routeTable privateIp =
     Ec2
         { id = Ec2Id id_
         , securityGroups = groups
-        , routeTable = routeTable
         , privateIp = privateIp
+        }
+
+
+type alias Config =
+    { id : String
+    , securityGroups : List SecurityGroup
+    , privateIp : Ipv4Address
+    }
+
+
+build2 : Config -> Ec2
+build2 config =
+    Ec2
+        { id = Ec2Id config.id
+        , securityGroups = config.securityGroups
+        , privateIp = config.privateIp
         }

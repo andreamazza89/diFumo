@@ -3,6 +3,7 @@ module Vpc.SecurityGroup exposing
     , Target
     , allowsEgress
     , build
+    , idAsString
     )
 
 import Cidr exposing (Cidr)
@@ -48,6 +49,10 @@ ruleMatches target (Rule rule_) =
     Cidr.contains target.toIp rule_.cidr
         && (target.forProtocol == rule_.forProtocol)
         && (target.overPort >= rule_.fromPort && target.overPort <= rule_.toPort)
+
+
+idAsString group =
+    Debug.todo ""
 
 
 
