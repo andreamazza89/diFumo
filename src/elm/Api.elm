@@ -1,10 +1,124 @@
-module Api exposing (..)
+module Api exposing (loadAllTheThings)
 
+import AwsFixtures.Json
 import Dict exposing (Dict)
+import IpAddress exposing (Ipv4Address)
+import Json.Decode as Json
 import Node exposing (Node)
+import Task
 import Vpc exposing (Vpc)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
+
+
+loadAllTheThings : (Result String (List Vpc) -> msg) -> Cmd msg
+loadAllTheThings toMsg =
+    decodeVpcs
+        |> Result.andThen decodeSubnets
+        |> Result.andThen decodeSecurityGroups
+        |> Result.andThen decodeInstances
+        |> Result.map buildVpcs
+        |> Result.map (Task.succeed >> Task.attempt toMsg)
+        |> Result.withDefault (Task.fail "ciao" |> Task.attempt toMsg)
+
+
+decodeVpcs : Result Json.Error VpcsResponse
+decodeVpcs =
+    Json.decodeString (Json.field "Vpcs" vpcsDecoder) AwsFixtures.Json.vpcs
+
+
+vpcsDecoder : Json.Decoder VpcsResponse
+vpcsDecoder =
+    Json.list (Json.map VpcResponse (Json.field "VpcId" Json.string))
+
+
+decodeSubnets : VpcsResponse -> Result Json.Error { vpcs : VpcsResponse, subnets : List SubnetResponse }
+decodeSubnets vpcs =
+    Json.decodeString (Json.field "Subnets" subnetsDecoder) AwsFixtures.Json.subnets
+        |> Result.andThen
+            (\subs ->
+                Ok
+                    { vpcs = vpcs
+                    , subnets = subs
+                    }
+            )
+
+
+subnetsDecoder : Json.Decoder (List SubnetResponse)
+subnetsDecoder =
+    Json.list
+        (Json.map2 SubnetResponse
+            (Json.field "SubnetId" Json.string)
+            (Json.field "VpcId" Json.string)
+        )
+
+
+decodeSecurityGroups : { vpcs : b, subnets : c } -> Result Json.Error { vpcs : b, subnets : c, securityGroups : SecurityGroupsResponse }
+decodeSecurityGroups { vpcs, subnets } =
+    Json.decodeString (Json.field "SecurityGroups" securityGroupsDecoder) AwsFixtures.Json.securityGroups
+        |> Result.andThen
+            (\secGroups ->
+                Ok
+                    { vpcs = vpcs
+                    , subnets = subnets
+                    , securityGroups = secGroups
+                    }
+            )
+
+
+securityGroupsDecoder : Json.Decoder SecurityGroupsResponse
+securityGroupsDecoder =
+    Json.list (Json.succeed {})
+
+
+decodeInstances :
+    { vpcs : VpcsResponse
+    , subnets : SubnetsResponse
+    , securityGroups : SecurityGroupsResponse
+    }
+    -> Result Json.Error AllTheData
+decodeInstances { vpcs, subnets, securityGroups } =
+    Json.decodeString
+        (Json.field "Reservations" (Json.list (Json.field "Instances" (Json.list instancesDecoder)))
+            |> Json.map List.concat
+        )
+        AwsFixtures.Json.instances
+        |> Result.andThen
+            (\instances ->
+                Ok
+                    { vpcs = vpcs
+                    , subnets = subnets
+                    , securityGroups = securityGroups
+                    , instances = instances
+                    }
+            )
+
+
+instancesDecoder : Json.Decoder InstanceResponse
+instancesDecoder =
+    Json.map4 InstanceResponse
+        (Json.field "InstanceId" Json.string)
+        (Json.field "SubnetId" Json.string)
+        (Json.field "PrivateIpAddress" decodeIpv4)
+        (Json.field "SecurityGroups" (Json.list (Json.field "GroupId" Json.string)))
+
+
+decodeIpv4 : Json.Decoder Ipv4Address
+decodeIpv4 =
+    Json.string
+        |> Json.andThen
+            (IpAddress.v4FromString
+                >> Maybe.map Json.succeed
+                >> Maybe.withDefault (Json.fail "could not parse ip")
+            )
+
+
+type alias AllTheData =
+    { vpcs : VpcsResponse
+    , subnets : SubnetsResponse
+    , securityGroups : SecurityGroupsResponse
+    , instances : InstancesResponse
+    }
 
 
 type alias VpcsResponse =
@@ -22,7 +136,7 @@ type alias InstancesResponse =
 type alias InstanceResponse =
     { id : String
     , subnetId : String
-    , privateIp : String
+    , privateIp : Ipv4Address
     , securityGroups : List String
     }
 
@@ -49,8 +163,10 @@ type alias VpcId =
     String
 
 
+buildVpcs : AllTheData -> List Vpc
 buildVpcs { vpcs, subnets, securityGroups, instances } =
-    buildNodes securityGroups instances
+    buildSecurityGroups securityGroups
+        |> buildNodes instances
         |> buildSubnets subnets
         |> buildVpcs_ vpcs
 
@@ -65,8 +181,13 @@ collectVpc subnetsByVpc vpc vpcs =
     Vpc.build vpc.id (Dict.get vpc.id subnetsByVpc |> Maybe.withDefault []) :: vpcs
 
 
-buildNodes : List SecurityGroup -> InstancesResponse -> Dict SubnetId (List Node)
-buildNodes securityGroups instances =
+buildSecurityGroups : SecurityGroupsResponse -> List SecurityGroup
+buildSecurityGroups securityGroups =
+    []
+
+
+buildNodes : InstancesResponse -> List SecurityGroup -> Dict SubnetId (List Node)
+buildNodes instances securityGroups =
     collectInstances securityGroups instances
 
 
@@ -82,7 +203,7 @@ collectInstance securityGroups instance nodesBySubnet =
             Node.buildEc2
                 { id = instance.id
                 , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) instance.securityGroups) securityGroups
-                , privateIp = Debug.todo ""
+                , privateIp = instance.privateIp
                 }
 
         addInstance nodes =
@@ -98,7 +219,7 @@ buildSubnets subnets nodesBySubnet =
     List.foldl (collectSubnet nodesBySubnet) Dict.empty subnets
 
 
-collectSubnet : Dict String (List Node) -> SubnetResponse -> Dict comparable (List Subnet) -> Dict comparable (List Subnet)
+collectSubnet : Dict String (List Node) -> SubnetResponse -> Dict VpcId (List Subnet) -> Dict VpcId (List Subnet)
 collectSubnet nodesBySubnet subnetResponse subnetsByVpc =
     let
         nodes =

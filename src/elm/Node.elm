@@ -2,7 +2,6 @@ module Node exposing
     ( Node
     , allowsEgress
     , buildEc2
-    , buildEc2Temp
     , equals
     , hasInternetRoute
     , idAsString
@@ -14,11 +13,15 @@ import IpAddress exposing (Ipv4Address)
 import Node.Ec2 as Ec2 exposing (Ec2)
 import Port exposing (Port)
 import Protocol exposing (Protocol)
-import Vpc.RouteTable exposing (RouteTable)
 import Vpc.SecurityGroup exposing (SecurityGroup)
 
 
 
+-- Mention something here about the denormalisation. This will make it much easier to access the necessary information
+-- when looking at an instance without the need to look it up from its parents.
+-- The catches are:
+--   1. All is (relatively) well as long as this data structure (and the whole Vpc tree) is read-only.
+--   2. For testing, we should take extra care to prevent building invalid states
 -- Node
 
 
@@ -108,11 +111,6 @@ hasInternetRoute toNode =
 buildEc2 : Ec2.Config -> Node
 buildEc2 config =
     Ec2 (Ec2.build2 config)
-
-
-buildEc2Temp : a -> Node
-buildEc2Temp _ =
-    Debug.todo "hi, please do this"
 
 
 internet : Node

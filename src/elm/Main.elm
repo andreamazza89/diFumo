@@ -1,14 +1,13 @@
 module Main exposing (main)
 
-import AwsFixtures.Elm as Fixtures
-import Browser
+import Api
+import Browser exposing (Document)
 import Connectivity
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Events exposing (onClick)
 import Element.Input as Input
-import Html exposing (Html)
 import Node exposing (Node)
 import Port exposing (Port)
 import Protocol
@@ -18,14 +17,24 @@ import Vpc.Subnet as Subnet exposing (Subnet)
 
 main : Program () Model Msg
 main =
-    Browser.sandbox
-        { init = NothingSelected
+    Browser.document
+        { init = always ( Loading, Api.loadAllTheThings VpcsLoaded )
         , view = view
         , update = update
+        , subscriptions = always Sub.none
         }
 
 
 type Model
+    = Loading
+    | Loaded Loaded_
+
+
+type alias Loaded_ =
+    { vpcs : List Vpc, pathSelection : PathSelection }
+
+
+type PathSelection
     = NothingSelected
     | SourceNode Node
     | Path { from : Node, to : Node } Port
@@ -35,100 +44,129 @@ type Msg
     = NodeClicked Node
     | PortTyped Port
     | NoOp
+    | VpcsLoaded (Result String (List Vpc))
 
 
-view : Model -> Html Msg
+view : Model -> Document Msg
 view model =
-    Element.layout [ padding 5 ] (theWorld Fixtures.myVpc model)
+    { body = [ Element.layout [ padding 5 ] (theWorld model) ]
+    , title = "DiFumo"
+    }
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NodeClicked node ->
-            updateSelection node model
+            ( updateSelection node model, Cmd.none )
 
         PortTyped portNumber ->
-            updatePort portNumber model
+            ( updatePort portNumber model, Cmd.none )
 
         NoOp ->
-            model
+            ( model, Cmd.none )
+
+        VpcsLoaded (Ok vpcs) ->
+            ( Loaded { vpcs = vpcs, pathSelection = NothingSelected }, Cmd.none )
+
+        VpcsLoaded (Err _) ->
+            ( model, Cmd.none )
 
 
 updateSelection : Node -> Model -> Model
 updateSelection nodeSelected model =
     case model of
-        NothingSelected ->
-            SourceNode nodeSelected
+        Loading ->
+            Loading
 
-        SourceNode sourceNode ->
-            Path { from = sourceNode, to = nodeSelected } 80
+        Loaded loaded ->
+            case loaded.pathSelection of
+                NothingSelected ->
+                    Loaded { loaded | pathSelection = SourceNode nodeSelected }
 
-        Path _ _ ->
-            SourceNode nodeSelected
+                SourceNode sourceNode ->
+                    Loaded { loaded | pathSelection = Path { from = sourceNode, to = nodeSelected } 80 }
+
+                Path _ _ ->
+                    Loaded { loaded | pathSelection = SourceNode nodeSelected }
 
 
 updatePort : Port -> Model -> Model
 updatePort portNumber model =
     case model of
-        NothingSelected ->
-            NothingSelected
+        Loading ->
+            Loading
 
-        SourceNode node ->
-            SourceNode node
+        Loaded loaded ->
+            case loaded.pathSelection of
+                NothingSelected ->
+                    Loaded loaded
 
-        Path path _ ->
-            Path path portNumber
+                SourceNode _ ->
+                    Loaded loaded
+
+                Path path _ ->
+                    Loaded { loaded | pathSelection = Path path portNumber }
 
 
 portSelected : Model -> String
 portSelected model =
     case model of
-        NothingSelected ->
+        Loading ->
             "80"
 
-        SourceNode _ ->
-            "80"
+        Loaded loaded ->
+            case loaded.pathSelection of
+                NothingSelected ->
+                    "80"
 
-        Path _ overPort ->
-            String.fromInt overPort
+                SourceNode _ ->
+                    "80"
+
+                Path _ portNumber ->
+                    String.fromInt portNumber
 
 
-theWorld : Vpc -> Model -> Element Msg
-theWorld vpc model =
+theWorld : Model -> Element Msg
+theWorld model =
     case model of
-        NothingSelected ->
-            row
-                [ width fill
-                , height fill
-                , spacing 10
-                ]
-                [ viewVpc model vpc
-                , internetNode model
-                ]
+        Loading ->
+            Element.text "Loading..."
 
-        SourceNode _ ->
-            row
-                [ width fill
-                , height fill
-                , spacing 10
-                ]
-                [ viewVpc model vpc
-                , internetNode model
-                ]
+        Loaded loaded ->
+            case loaded.pathSelection of
+                NothingSelected ->
+                    row
+                        [ width fill
+                        , height fill
+                        , spacing 10
+                        ]
+                        [ viewVpcs loaded
+                        , internetNode loaded
+                        ]
 
-        Path path forPort ->
-            column [ width fill, height fill ]
-                [ row
-                    [ width fill
-                    , height fill
-                    , spacing 10
-                    ]
-                    [ viewVpc model vpc
-                    , internetNode model
-                    ]
-                , showConnectionInfo path forPort model
-                ]
+                SourceNode _ ->
+                    row
+                        [ width fill
+                        , height fill
+                        , spacing 10
+                        ]
+                        [ viewVpcs loaded
+                        , internetNode loaded
+                        ]
+
+                Path path forPort ->
+                    column [ width fill, height fill ]
+                        [ row
+                            [ width fill
+                            , height fill
+                            , spacing 10
+                            ]
+                            [ viewVpcs loaded
+                            , internetNode loaded
+                            ]
+                        , showConnectionInfo path forPort model
+                        ]
 
 
 showConnectionInfo : { a | from : Node, to : Node } -> Port -> Model -> Element Msg
@@ -182,7 +220,7 @@ viewIssue issue =
             text "Route table (Explain here why the route table for the source node does not allow internet traffic)"
 
 
-internetNode : Model -> Element Msg
+internetNode : Loaded_ -> Element Msg
 internetNode model =
     let
         attributes att =
@@ -202,7 +240,13 @@ internetNode model =
         (text "internet")
 
 
-viewVpc : Model -> Vpc -> Element Msg
+viewVpcs : Loaded_ -> Element Msg
+viewVpcs model =
+    List.map (viewVpc model) model.vpcs
+        |> column [ width fill, height fill ]
+
+
+viewVpc : Loaded_ -> Vpc -> Element Msg
 viewVpc model vpc =
     column
         [ width fill
@@ -216,12 +260,12 @@ viewVpc model vpc =
         ]
 
 
-viewSubnets : Model -> List Subnet -> Element Msg
+viewSubnets : Loaded_ -> List Subnet -> Element Msg
 viewSubnets model =
     List.map (viewSubnet model) >> column [ spacing 5, width fill, height fill ]
 
 
-viewSubnet : Model -> Subnet -> Element Msg
+viewSubnet : Loaded_ -> Subnet -> Element Msg
 viewSubnet model subnet_ =
     column
         [ Border.width 2
@@ -235,12 +279,12 @@ viewSubnet model subnet_ =
         ]
 
 
-viewNodes : Model -> List Node -> Element Msg
+viewNodes : Loaded_ -> List Node -> Element Msg
 viewNodes model =
     List.map (viewNode model) >> row [ spacing 5 ]
 
 
-viewNode : Model -> Node -> Element Msg
+viewNode : Loaded_ -> Node -> Element Msg
 viewNode model node_ =
     let
         attributes att =
@@ -260,9 +304,9 @@ viewNode model node_ =
         (text ("ec2  " ++ Node.idAsString node_))
 
 
-isSelected : Node -> Model -> Bool
+isSelected : Node -> Loaded_ -> Bool
 isSelected node model =
-    case model of
+    case model.pathSelection of
         NothingSelected ->
             False
 

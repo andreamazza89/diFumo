@@ -1,4 +1,13 @@
-module IpAddress exposing (Ipv4Address, buildV4, isBetween, madeUpV4, plus)
+module IpAddress exposing
+    ( Ipv4Address
+    , buildV4
+    , isBetween
+    , madeUpV4
+    , plus
+    , v4FromString
+    )
+
+import Parser exposing ((|.), (|=), Parser)
 
 
 type Ipv4Address
@@ -6,7 +15,29 @@ type Ipv4Address
 
 
 
--- Builder
+-- Build
+
+
+v4FromString : String -> Maybe Ipv4Address
+v4FromString =
+    String.replace "." "-" >> Parser.run ipv4Parser >> Result.withDefault Nothing
+
+
+ipv4Parser : Parser (Maybe Ipv4Address)
+ipv4Parser =
+    Parser.succeed buildV4
+        |. Parser.chompWhile ((==) '"')
+        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
+        |. Parser.symbol "-"
+        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
+        |. Parser.symbol "-"
+        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
+        |. Parser.symbol "-"
+        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
+
+
+foo =
+    String.replace
 
 
 madeUpV4 : Ipv4Address
@@ -28,9 +59,17 @@ numberIsWithinRange n =
     n >= 0 && n <= 255
 
 
+
+-- Query
+
+
 isBetween : Ipv4Address -> Ipv4Address -> Ipv4Address -> Bool
 isBetween (Ipv4Address lower) (Ipv4Address upper) (Ipv4Address address) =
     address >= lower && address <= upper
+
+
+
+-- Update
 
 
 plus : Ipv4Address -> Int -> Ipv4Address

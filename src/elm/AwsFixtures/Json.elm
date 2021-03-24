@@ -1,4 +1,51 @@
-module Json exposing (securityGroups, instances)
+module AwsFixtures.Json exposing
+    ( instances
+    , securityGroups
+    , subnets
+    , vpcs
+    , routeTables)
+
+
+vpcs : String
+vpcs =
+    """
+    {
+        \"Vpcs\": [
+            {
+                \"CidrBlock\": \"42.0.0.0/16\",
+                \"DhcpOptionsId\": \"dopt-aac093cc\",
+                \"State\": \"available\",
+                \"VpcId\": \"vpc-02a34f69639e5d566\",
+                \"OwnerId\": \"062881346168\",
+                \"InstanceTenancy\": \"default\",
+                \"CidrBlockAssociationSet\": [
+                    {
+                        \"AssociationId\": \"vpc-cidr-assoc-0911856de589dc8ba\",
+                        \"CidrBlock\": \"42.0.0.0/16\",
+                        \"CidrBlockState\": {
+                            \"State\": \"associated\"
+                        }
+                    }
+                ],
+                \"IsDefault\": false,
+                \"Tags\": [
+                    {
+                        \"Key\": \"env\",
+                        \"Value\": \"development\"
+                    },
+                    {
+                        \"Key\": \"family\",
+                        \"Value\": \"oprah\"
+                    },
+                    {
+                        \"Key\": \"Name\",
+                        \"Value\": \"Oprah VPC\"
+                    }
+                ]
+            }
+        ]
+    }
+    """
 
 
 securityGroups : String
@@ -284,6 +331,7 @@ securityGroups =
     }
     """
 
+
 instances : String
 instances =
     """
@@ -303,18 +351,18 @@ instances =
                         },
                         \"Placement\": {
                             \"AvailabilityZone\": \"eu-west-1a\",
-                            \"GroupName\": \"",
+                            \"GroupName\": \"\",
                             \"Tenancy\": \"default\"
                         },
                         \"PrivateDnsName\": \"ip-42-0-5-157.eu-west-1.compute.internal\",
                         \"PrivateIpAddress\": \"42.0.5.157\",
                         \"ProductCodes\": [],
-                        \"PublicDnsName\": \"",
+                        \"PublicDnsName\": \"\",
                         \"State\": {
                             \"Code\": 16,
                             \"Name\": \"running\"
                         },
-                        \"StateTransitionReason\": \"",
+                        \"StateTransitionReason\": \"\",
                         \"SubnetId\": \"subnet-06b385372a02a26f9\",
                         \"VpcId\": \"vpc-02a34f69639e5d566\",
                         \"Architecture\": \"x86_64\",
@@ -347,7 +395,7 @@ instances =
                                     \"Status\": \"attached\",
                                     \"NetworkCardIndex\": 0
                                 },
-                                \"Description\": \"",
+                                \"Description\": \"\",
                                 \"Groups\": [
                                     {
                                         \"GroupName\": \"bastion\",
@@ -425,6 +473,285 @@ instances =
                 ],
                 \"OwnerId\": \"062881346168\",
                 \"ReservationId\": \"r-08a5672123fe3edf1\"
+            }
+        ]
+    }
+    """
+
+
+subnets : String
+subnets =
+    """
+    {
+        \"Subnets\": [
+            {
+                \"AvailabilityZone\": \"eu-west-1a\",
+                \"AvailabilityZoneId\": \"euw1-az2\",
+                \"AvailableIpAddressCount\": 2036,
+                \"CidrBlock\": \"42.0.0.0/21\",
+                \"DefaultForAz\": false,
+                \"MapPublicIpOnLaunch\": false,
+                \"MapCustomerOwnedIpOnLaunch\": false,
+                \"State\": \"available\",
+                \"SubnetId\": \"subnet-06b385372a02a26f9\",
+                \"VpcId\": \"vpc-02a34f69639e5d566\",
+                \"OwnerId\": \"062881346168\",
+                \"AssignIpv6AddressOnCreation\": false,
+                \"Ipv6CidrBlockAssociationSet\": [],
+                \"Tags\": [
+                    {
+                        \"Key\": \"env\",
+                        \"Value\": \"development\"
+                    },
+                    {
+                        \"Key\": \"family\",
+                        \"Value\": \"oprah\"
+                    },
+                    {
+                        \"Key\": \"Name\",
+                        \"Value\": \"Oprah private subnet a\"
+                    }
+                ],
+                \"SubnetArn\": \"arn:aws:ec2:eu-west-1:062881346168:subnet/subnet-06b385372a02a26f9\"
+            },
+            {
+                \"AvailabilityZone\": \"eu-west-1b\",
+                \"AvailabilityZoneId\": \"euw1-az3\",
+                \"AvailableIpAddressCount\": 2042,
+                \"CidrBlock\": \"42.0.24.0/21\",
+                \"DefaultForAz\": false,
+                \"MapPublicIpOnLaunch\": true,
+                \"MapCustomerOwnedIpOnLaunch\": false,
+                \"State\": \"available\",
+                \"SubnetId\": \"subnet-06b6493e0504e3071\",
+                \"VpcId\": \"vpc-02a34f69639e5d566\",
+                \"OwnerId\": \"062881346168\",
+                \"AssignIpv6AddressOnCreation\": false,
+                \"Ipv6CidrBlockAssociationSet\": [],
+                \"Tags\": [
+                    {
+                        \"Key\": \"family\",
+                        \"Value\": \"oprah\"
+                    },
+                    {
+                        \"Key\": \"env\",
+                        \"Value\": \"development\"
+                    },
+                    {
+                        \"Key\": \"Name\",
+                        \"Value\": \"Oprah public subnet b\"
+                    }
+                ],
+                \"SubnetArn\": \"arn:aws:ec2:eu-west-1:062881346168:subnet/subnet-06b6493e0504e3071\"
+            },
+            {
+                \"AvailabilityZone\": \"eu-west-1a\",
+                \"AvailabilityZoneId\": \"euw1-az2\",
+                \"AvailableIpAddressCount\": 2041,
+                \"CidrBlock\": \"42.0.16.0/21\",
+                \"DefaultForAz\": false,
+                \"MapPublicIpOnLaunch\": true,
+                \"MapCustomerOwnedIpOnLaunch\": false,
+                \"State\": \"available\",
+                \"SubnetId\": \"subnet-0926c582dfc511c89\",
+                \"VpcId\": \"vpc-02a34f69639e5d566\",
+                \"OwnerId\": \"062881346168\",
+                \"AssignIpv6AddressOnCreation\": false,
+                \"Ipv6CidrBlockAssociationSet\": [],
+                \"Tags\": [
+                    {
+                        \"Key\": \"family\",
+                        \"Value\": \"oprah\"
+                    },
+                    {
+                        \"Key\": \"Name\",
+                        \"Value\": \"Oprah public subnet a\"
+                    },
+                    {
+                        \"Key\": \"env\",
+                        \"Value\": \"development\"
+                    }
+                ],
+                \"SubnetArn\": \"arn:aws:ec2:eu-west-1:062881346168:subnet/subnet-0926c582dfc511c89\"
+            },
+            {
+                \"AvailabilityZone\": \"eu-west-1b\",
+                \"AvailabilityZoneId\": \"euw1-az3\",
+                \"AvailableIpAddressCount\": 2038,
+                \"CidrBlock\": \"42.0.8.0/21\",
+                \"DefaultForAz\": false,
+                \"MapPublicIpOnLaunch\": false,
+                \"MapCustomerOwnedIpOnLaunch\": false,
+                \"State\": \"available\",
+                \"SubnetId\": \"subnet-0c8587ae21dd2f18a\",
+                \"VpcId\": \"vpc-02a34f69639e5d566\",
+                \"OwnerId\": \"062881346168\",
+                \"AssignIpv6AddressOnCreation\": false,
+                \"Ipv6CidrBlockAssociationSet\": [],
+                \"Tags\": [
+                    {
+                        \"Key\": \"family\",
+                        \"Value\": \"oprah\"
+                    },
+                    {
+                        \"Key\": \"env\",
+                        \"Value\": \"development\"
+                    },
+                    {
+                        \"Key\": \"Name\",
+                        \"Value\": \"Oprah private subnet b\"
+                    }
+                ],
+                \"SubnetArn\": \"arn:aws:ec2:eu-west-1:062881346168:subnet/subnet-0c8587ae21dd2f18a\"
+            }
+        ]
+    }
+    """
+
+
+routeTables : String
+routeTables =
+    """
+    {
+        \"RouteTables\": [
+            {
+                \"Associations\": [
+                    {
+                        \"Main\": true,
+                        \"RouteTableAssociationId\": \"rtbassoc-02e6a4c0d08451cfa\",
+                        \"RouteTableId\": \"rtb-0ca5500ccd19357fc\",
+                        \"AssociationState\": {
+                            \"State\": \"associated\"
+                        }
+                    }
+                ],
+                \"PropagatingVgws\": [],
+                \"RouteTableId\": \"rtb-0ca5500ccd19357fc\",
+                \"Routes\": [
+                    {
+                        \"DestinationCidrBlock\": \"42.0.0.0/16\",
+                        \"GatewayId\": \"local\",
+                        \"Origin\": \"CreateRouteTable\",
+                        \"State\": \"active\"
+                    }
+                ],
+                \"Tags\": [],
+                \"VpcId\": \"vpc-02a34f69639e5d566\",
+                \"OwnerId\": \"062881346168\"
+            },
+            {
+                \"Associations\": [
+                    {
+                        \"Main\": false,
+                        \"RouteTableAssociationId\": \"rtbassoc-0361d2fb151daaff6\",
+                        \"RouteTableId\": \"rtb-04d93e9f6bf4e9433\",
+                        \"SubnetId\": \"subnet-0c8587ae21dd2f18a\",
+                        \"AssociationState\": {
+                            \"State\": \"associated\"
+                        }
+                    },
+                    {
+                        \"Main\": false,
+                        \"RouteTableAssociationId\": \"rtbassoc-01928583a47ae5440\",
+                        \"RouteTableId\": \"rtb-04d93e9f6bf4e9433\",
+                        \"SubnetId\": \"subnet-06b385372a02a26f9\",
+                        \"AssociationState\": {
+                            \"State\": \"associated\"
+                        }
+                    }
+                ],
+                \"PropagatingVgws\": [],
+                \"RouteTableId\": \"rtb-04d93e9f6bf4e9433\",
+                \"Routes\": [
+                    {
+                        \"DestinationCidrBlock\": \"42.0.0.0/16\",
+                        \"GatewayId\": \"local\",
+                        \"Origin\": \"CreateRouteTable\",
+                        \"State\": \"active\"
+                    },
+                    {
+                        \"DestinationCidrBlock\": \"0.0.0.0/0\",
+                        \"NatGatewayId\": \"nat-0bd293ef912fb8bfb\",
+                        \"Origin\": \"CreateRoute\",
+                        \"State\": \"active\"
+                    },
+                    {
+                        \"DestinationPrefixListId\": \"pl-6da54004\",
+                        \"GatewayId\": \"vpce-058d988a9f24d2a53\",
+                        \"Origin\": \"CreateRoute\",
+                        \"State\": \"active\"
+                    }
+                ],
+                \"Tags\": [
+                    {
+                        \"Key\": \"Name\",
+                        \"Value\": \"Oprah private route table\"
+                    },
+                    {
+                        \"Key\": \"env\",
+                        \"Value\": \"development\"
+                    },
+                    {
+                        \"Key\": \"family\",
+                        \"Value\": \"oprah\"
+                    }
+                ],
+                \"VpcId\": \"vpc-02a34f69639e5d566\",
+                \"OwnerId\": \"062881346168\"
+            },
+            {
+                \"Associations\": [
+                    {
+                        \"Main\": false,
+                        \"RouteTableAssociationId\": \"rtbassoc-06f68e55e631ec8a1\",
+                        \"RouteTableId\": \"rtb-0c4deb756e5396492\",
+                        \"SubnetId\": \"subnet-0926c582dfc511c89\",
+                        \"AssociationState\": {
+                            \"State\": \"associated\"
+                        }
+                    },
+                    {
+                        \"Main\": false,
+                        \"RouteTableAssociationId\": \"rtbassoc-00ef5b351e3c87c96\",
+                        \"RouteTableId\": \"rtb-0c4deb756e5396492\",
+                        \"SubnetId\": \"subnet-06b6493e0504e3071\",
+                        \"AssociationState\": {
+                            \"State\": \"associated\"
+                        }
+                    }
+                ],
+                \"PropagatingVgws\": [],
+                \"RouteTableId\": \"rtb-0c4deb756e5396492\",
+                \"Routes\": [
+                    {
+                        \"DestinationCidrBlock\": \"42.0.0.0/16\",
+                        \"GatewayId\": \"local\",
+                        \"Origin\": \"CreateRouteTable\",
+                        \"State\": \"active\"
+                    },
+                    {
+                        \"DestinationCidrBlock\": \"0.0.0.0/0\",
+                        \"GatewayId\": \"igw-0bd697ec0e7462be4\",
+                        \"Origin\": \"CreateRoute\",
+                        \"State\": \"active\"
+                    }
+                ],
+                \"Tags\": [
+                    {
+                        \"Key\": \"family\",
+                        \"Value\": \"oprah\"
+                    },
+                    {
+                        \"Key\": \"Name\",
+                        \"Value\": \"Oprah public route table\"
+                    },
+                    {
+                        \"Key\": \"env\",
+                        \"Value\": \"development\"
+                    }
+                ],
+                \"VpcId\": \"vpc-02a34f69639e5d566\",
+                \"OwnerId\": \"062881346168\"
             }
         ]
     }

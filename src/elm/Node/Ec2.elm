@@ -16,14 +16,6 @@ import Vpc.RouteTable exposing (RouteTable)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 
 
-
--- Mention something here about the denormalisation. This will make it much easier to access the necessary information
--- when looking at an instance without the need to look it up from its parents.
--- The catches are:
---   1. All is (relatively) well as long as this data structure (and the whole Vpc tree) is read-only.
---   2. For testing, we should take extra care to prevent building invalid states
-
-
 type Ec2
     = Ec2
         { securityGroups : List SecurityGroup -- make nonempty -- maybe this should be lifted to the Node level, as any node other than the Internet has one or more security groups
