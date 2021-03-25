@@ -1,10 +1,18 @@
-module Cidr exposing (Cidr, SubnetMask, build, contains, madeUpRange)
+module Cidr exposing
+    ( Cidr
+    , SubnetMask
+    , build
+    , contains
+    , fromString
+    )
 
 import IpAddress exposing (Ipv4Address)
+import Parser exposing ((|.), (|=), Parser)
 
 
 type Cidr
     = Cidr Ipv4Address SubnetMask
+    | Everywhere
 
 
 type alias SubnetMask =
@@ -13,16 +21,16 @@ type alias SubnetMask =
 
 contains : Ipv4Address -> Cidr -> Bool
 contains ipAddress cidr =
-    IpAddress.isBetween (firstIpInRange cidr) (lastIpInRange cidr) ipAddress
+    case cidr of
+        Cidr firstIp subnetMask ->
+            IpAddress.isBetween firstIp (lastIpInRange firstIp subnetMask) ipAddress
+
+        Everywhere ->
+            True
 
 
-firstIpInRange : Cidr -> Ipv4Address
-firstIpInRange (Cidr firstAddress _) =
-    firstAddress
-
-
-lastIpInRange : Cidr -> Ipv4Address
-lastIpInRange (Cidr firstAddress mask) =
+lastIpInRange : Ipv4Address -> SubnetMask -> Ipv4Address
+lastIpInRange firstAddress mask =
     IpAddress.plus firstAddress (subnetSize mask)
 
 
@@ -46,6 +54,28 @@ build mask address =
         Nothing
 
 
-madeUpRange : Cidr
-madeUpRange =
-    Cidr IpAddress.madeUpV4 24
+fromString : String -> Maybe Cidr
+fromString string =
+    if string == "0.0.0.0/0" then
+        Just Everywhere
+
+    else
+        Maybe.map2 build
+            (parseSubnetMask string)
+            (IpAddress.v4FromString string)
+            |> Maybe.withDefault Nothing
+
+
+parseSubnetMask : String -> Maybe Int
+parseSubnetMask string =
+    Parser.run subnetMaskParser string
+        |> Result.map Just
+        |> Result.withDefault Nothing
+
+
+subnetMaskParser : Parser Int
+subnetMaskParser =
+    Parser.succeed identity
+        |. Parser.chompUntil "/"
+        |. Parser.symbol "/"
+        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }

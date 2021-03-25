@@ -1,10 +1,12 @@
 module Api exposing (loadAllTheThings)
 
 import AwsFixtures.Json
+import Cidr exposing (Cidr)
 import Dict exposing (Dict)
 import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
 import Node exposing (Node)
+import Protocol
 import Task
 import Vpc exposing (Vpc)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
@@ -19,7 +21,7 @@ loadAllTheThings toMsg =
         |> Result.andThen decodeInstances
         |> Result.map buildVpcs
         |> Result.map (Task.succeed >> Task.attempt toMsg)
-        |> Result.withDefault (Task.fail "ciao" |> Task.attempt toMsg)
+        |> Result.withDefault (Task.fail "something went wrong with the zipping" |> Task.attempt toMsg)
 
 
 decodeVpcs : Result Json.Error VpcsResponse
@@ -53,7 +55,7 @@ subnetsDecoder =
         )
 
 
-decodeSecurityGroups : { vpcs : b, subnets : c } -> Result Json.Error { vpcs : b, subnets : c, securityGroups : SecurityGroupsResponse }
+decodeSecurityGroups : { vpcs : b, subnets : c } -> Result Json.Error { vpcs : b, subnets : c, securityGroups : List SecurityGroup }
 decodeSecurityGroups { vpcs, subnets } =
     Json.decodeString (Json.field "SecurityGroups" securityGroupsDecoder) AwsFixtures.Json.securityGroups
         |> Result.andThen
@@ -66,15 +68,74 @@ decodeSecurityGroups { vpcs, subnets } =
             )
 
 
-securityGroupsDecoder : Json.Decoder SecurityGroupsResponse
+securityGroupsDecoder : Json.Decoder (List SecurityGroup)
 securityGroupsDecoder =
-    Json.list (Json.succeed {})
+    Json.list
+        (Json.map3 SecurityGroup.build
+            (Json.field "GroupId" Json.string)
+            (Json.field "IpPermissions" rulesDecoder)
+            (Json.field "IpPermissionsEgress" rulesDecoder)
+        )
+
+
+rulesDecoder : Json.Decoder (List SecurityGroup.Rule_)
+rulesDecoder =
+    Json.list
+        (Json.map4 SecurityGroup.Rule_
+            (Json.field "IpProtocol" protocolDecoder)
+            fromPortDecoder
+            toPortDecoder
+            (Json.field "IpRanges" (Json.list cidrDecoder))
+        )
+
+
+fromPortDecoder : Json.Decoder Int
+fromPortDecoder =
+    Json.oneOf
+        [ Json.field "FromPort" Json.int
+        , Json.succeed 0
+        ]
+
+
+toPortDecoder : Json.Decoder Int
+toPortDecoder =
+    Json.oneOf
+        [ Json.field "ToPort" Json.int
+        , Json.succeed 65535
+        ]
+
+
+protocolDecoder : Json.Decoder Protocol.Protocol
+protocolDecoder =
+    Json.string
+        |> Json.andThen
+            (\protocol ->
+                case protocol of
+                    "tcp" ->
+                        Json.succeed Protocol.Tcp
+
+                    "-1" ->
+                        Json.succeed Protocol.All
+
+                    _ ->
+                        Json.fail ("Unrecognised ip protocol: " ++ protocol)
+            )
+
+
+cidrDecoder : Json.Decoder Cidr
+cidrDecoder =
+    Json.field "CidrIp" Json.string
+        |> Json.andThen
+            (Cidr.fromString
+                >> Maybe.map Json.succeed
+                >> Maybe.withDefault (Json.fail "could not parse cidr")
+            )
 
 
 decodeInstances :
     { vpcs : VpcsResponse
     , subnets : SubnetsResponse
-    , securityGroups : SecurityGroupsResponse
+    , securityGroups : List SecurityGroup
     }
     -> Result Json.Error AllTheData
 decodeInstances { vpcs, subnets, securityGroups } =
@@ -116,7 +177,7 @@ decodeIpv4 =
 type alias AllTheData =
     { vpcs : VpcsResponse
     , subnets : SubnetsResponse
-    , securityGroups : SecurityGroupsResponse
+    , securityGroups : List SecurityGroup
     , instances : InstancesResponse
     }
 
@@ -165,8 +226,7 @@ type alias VpcId =
 
 buildVpcs : AllTheData -> List Vpc
 buildVpcs { vpcs, subnets, securityGroups, instances } =
-    buildSecurityGroups securityGroups
-        |> buildNodes instances
+    buildNodes instances securityGroups
         |> buildSubnets subnets
         |> buildVpcs_ vpcs
 

@@ -1,5 +1,6 @@
 module Vpc.SecurityGroup exposing
-    ( SecurityGroup
+    ( Rule_
+    , SecurityGroup
     , Target
     , allowsEgress
     , build
@@ -18,18 +19,26 @@ import Protocol exposing (Protocol)
 
 type SecurityGroup
     = SecurityGroup
-        { description : String
+        { id : Id
+        , ingress : List Rule
         , egress : List Rule
         }
 
 
+type Id
+    = Id String
+
+
 type Rule
-    = Rule
-        { forProtocol : Protocol
-        , fromPort : Port
-        , toPort : Port
-        , cidr : Cidr
-        }
+    = Rule Rule_
+
+
+type alias Rule_ =
+    { forProtocol : Protocol
+    , fromPort : Port
+    , toPort : Port
+    , cidrs : List Cidr
+    }
 
 
 type alias Target =
@@ -46,31 +55,26 @@ allowsEgress target (SecurityGroup { egress }) =
 
 ruleMatches : Target -> Rule -> Bool
 ruleMatches target (Rule rule_) =
-    Cidr.contains target.toIp rule_.cidr
+    List.any (Cidr.contains target.toIp) rule_.cidrs
         && (target.forProtocol == rule_.forProtocol)
         && (target.overPort >= rule_.fromPort && target.overPort <= rule_.toPort)
 
 
-idAsString group =
-    Debug.todo ""
+idAsString : SecurityGroup -> String
+idAsString (SecurityGroup { id }) =
+    case id of
+        Id stringId ->
+            stringId
 
 
 
 -- Builder
 
 
-build : String -> List { fromPort : Port, toPort : Port, cidr : Cidr } -> SecurityGroup
-build description egress =
+build : String -> List Rule_ -> List Rule_ -> SecurityGroup
+build id ingress egress =
     SecurityGroup
-        { description = description
-        , egress = List.map toRule egress
-        }
-
-
-toRule { fromPort, toPort, cidr } =
-    Rule
-        { forProtocol = Protocol.Tcp
-        , fromPort = fromPort
-        , toPort = toPort
-        , cidr = cidr
+        { id = Id id
+        , ingress = List.map Rule ingress
+        , egress = List.map Rule egress
         }
