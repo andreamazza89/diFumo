@@ -3,6 +3,7 @@ module Cidr exposing
     , SubnetMask
     , build
     , contains
+    , everywhere
     , fromString
     )
 
@@ -43,6 +44,11 @@ subnetSize mask =
 
 -- TODO: When building a cidr, if the ip supplied is in the middle of the range, the builder should default to the first one
 -- for example, given 10.0.0.55/16 the ip used should be 10.0.0.0
+
+
+everywhere : Cidr
+everywhere =
+    Everywhere
 
 
 build : SubnetMask -> Ipv4Address -> Maybe Cidr

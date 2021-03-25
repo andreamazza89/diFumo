@@ -37,7 +37,16 @@ suite =
             \_ ->
                 cidr [ 10, 0, 0, 0 ] 16
                     |> doesNotContain [ 9, 255, 255, 255 ]
+        , test "The 'everywhere' cidr matches any address" <|
+            \_ ->
+                everywhereCidr
+                    |> contains [ 1, 2, 3, 4 ]
         ]
+
+
+everywhereCidr : Maybe Cidr
+everywhereCidr =
+    Just Cidr.everywhere
 
 
 cidr : List Int -> Cidr.SubnetMask -> Maybe Cidr
