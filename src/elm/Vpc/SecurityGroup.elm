@@ -56,8 +56,8 @@ allowsEgress target (SecurityGroup { egress }) =
 ruleMatches : Target -> Rule -> Bool
 ruleMatches target (Rule rule_) =
     List.any (Cidr.contains target.toIp) rule_.cidrs
-        && (target.forProtocol == rule_.forProtocol)
-        && (target.overPort >= rule_.fromPort && target.overPort <= rule_.toPort)
+        && Protocol.matches target.forProtocol rule_.forProtocol
+        && Port.isWithin rule_ target.overPort
 
 
 idAsString : SecurityGroup -> String

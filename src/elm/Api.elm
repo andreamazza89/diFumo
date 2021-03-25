@@ -6,6 +6,7 @@ import Dict exposing (Dict)
 import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
 import Node exposing (Node)
+import Port
 import Protocol
 import Task
 import Vpc exposing (Vpc)
@@ -93,7 +94,7 @@ fromPortDecoder : Json.Decoder Int
 fromPortDecoder =
     Json.oneOf
         [ Json.field "FromPort" Json.int
-        , Json.succeed 0
+        , Json.succeed Port.first
         ]
 
 
@@ -101,7 +102,7 @@ toPortDecoder : Json.Decoder Int
 toPortDecoder =
     Json.oneOf
         [ Json.field "ToPort" Json.int
-        , Json.succeed 65535
+        , Json.succeed Port.last
         ]
 
 

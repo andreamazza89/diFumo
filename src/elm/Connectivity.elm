@@ -1,10 +1,12 @@
-module Connectivity exposing (ConnectionIssue(..), Connectivity(..), check)
-
----- Connectivity
+module Connectivity exposing (ConnectionIssue(..), Connectivity(..), ConnectivityContext, check, isPossible)
 
 import Node exposing (Node)
 import Port exposing (Port)
 import Protocol exposing (Protocol)
+
+
+
+---- Connectivity
 
 
 type Connectivity
@@ -15,6 +17,11 @@ type Connectivity
 type ConnectionIssue
     = MissingEgressRule
     | RouteTableHasNoInternetAccess
+
+
+isPossible : Connectivity -> Bool
+isPossible =
+    (==) Possible
 
 
 combineWith : Connectivity -> Connectivity -> Connectivity
