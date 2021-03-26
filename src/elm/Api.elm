@@ -1,6 +1,9 @@
-module Api exposing (loadAllTheThings)
+module Api exposing
+    ( VpcsResponse
+    , decodeAwsData
+    , vpcsDecoder
+    )
 
-import AwsFixtures.Json
 import Cidr exposing (Cidr)
 import Dict exposing (Dict)
 import IpAddress exposing (Ipv4Address)
@@ -8,43 +11,28 @@ import Json.Decode as Json
 import Node exposing (Node)
 import Port
 import Protocol
-import Task
 import Vpc exposing (Vpc)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
 
-loadAllTheThings : (Result String (List Vpc) -> msg) -> Cmd msg
-loadAllTheThings toMsg =
-    decodeVpcs
-        |> Result.andThen decodeSubnets
-        |> Result.andThen decodeSecurityGroups
-        |> Result.andThen decodeInstances
-        |> Result.map buildVpcs
-        |> Result.map (Task.succeed >> Task.attempt toMsg)
-        |> Result.withDefault (Task.fail "something went wrong with the zipping" |> Task.attempt toMsg)
+decodeAwsData : Json.Value -> Result Json.Error (List Vpc)
+decodeAwsData =
+    Json.decodeValue awsDataDecoder >> Result.map buildVpcs
 
 
-decodeVpcs : Result Json.Error VpcsResponse
-decodeVpcs =
-    Json.decodeString (Json.field "Vpcs" vpcsDecoder) AwsFixtures.Json.vpcs
+awsDataDecoder : Json.Decoder AllTheData
+awsDataDecoder =
+    Json.map4 AllTheData
+        (Json.field "vpcsResponse" vpcsDecoder)
+        (Json.field "subnetsResponse" subnetsDecoder)
+        (Json.field "securityGroupsResponse" securityGroupsDecoder)
+        (Json.field "instancesResponse" instancesDecoder)
 
 
 vpcsDecoder : Json.Decoder VpcsResponse
 vpcsDecoder =
     Json.list (Json.map VpcResponse (Json.field "VpcId" Json.string))
-
-
-decodeSubnets : VpcsResponse -> Result Json.Error { vpcs : VpcsResponse, subnets : List SubnetResponse }
-decodeSubnets vpcs =
-    Json.decodeString (Json.field "Subnets" subnetsDecoder) AwsFixtures.Json.subnets
-        |> Result.andThen
-            (\subs ->
-                Ok
-                    { vpcs = vpcs
-                    , subnets = subs
-                    }
-            )
 
 
 subnetsDecoder : Json.Decoder (List SubnetResponse)
@@ -54,19 +42,6 @@ subnetsDecoder =
             (Json.field "SubnetId" Json.string)
             (Json.field "VpcId" Json.string)
         )
-
-
-decodeSecurityGroups : { vpcs : b, subnets : c } -> Result Json.Error { vpcs : b, subnets : c, securityGroups : List SecurityGroup }
-decodeSecurityGroups { vpcs, subnets } =
-    Json.decodeString (Json.field "SecurityGroups" securityGroupsDecoder) AwsFixtures.Json.securityGroups
-        |> Result.andThen
-            (\secGroups ->
-                Ok
-                    { vpcs = vpcs
-                    , subnets = subnets
-                    , securityGroups = secGroups
-                    }
-            )
 
 
 securityGroupsDecoder : Json.Decoder (List SecurityGroup)
@@ -113,10 +88,10 @@ protocolDecoder =
             (\protocol ->
                 case protocol of
                     "tcp" ->
-                        Json.succeed Protocol.Tcp
+                        Json.succeed Protocol.tcp
 
                     "-1" ->
-                        Json.succeed Protocol.All
+                        Json.succeed Protocol.all
 
                     _ ->
                         Json.fail ("Unrecognised ip protocol: " ++ protocol)
@@ -133,31 +108,14 @@ cidrDecoder =
             )
 
 
-decodeInstances :
-    { vpcs : VpcsResponse
-    , subnets : SubnetsResponse
-    , securityGroups : List SecurityGroup
-    }
-    -> Result Json.Error AllTheData
-decodeInstances { vpcs, subnets, securityGroups } =
-    Json.decodeString
-        (Json.field "Reservations" (Json.list (Json.field "Instances" (Json.list instancesDecoder)))
-            |> Json.map List.concat
-        )
-        AwsFixtures.Json.instances
-        |> Result.andThen
-            (\instances ->
-                Ok
-                    { vpcs = vpcs
-                    , subnets = subnets
-                    , securityGroups = securityGroups
-                    , instances = instances
-                    }
-            )
-
-
-instancesDecoder : Json.Decoder InstanceResponse
+instancesDecoder : Json.Decoder (List InstanceResponse)
 instancesDecoder =
+    Json.list (Json.field "Instances" (Json.list instanceDecoder))
+        |> Json.map List.concat
+
+
+instanceDecoder : Json.Decoder InstanceResponse
+instanceDecoder =
     Json.map4 InstanceResponse
         (Json.field "InstanceId" Json.string)
         (Json.field "SubnetId" Json.string)
@@ -242,11 +200,6 @@ collectVpc subnetsByVpc vpc vpcs =
     Vpc.build vpc.id (Dict.get vpc.id subnetsByVpc |> Maybe.withDefault []) :: vpcs
 
 
-buildSecurityGroups : SecurityGroupsResponse -> List SecurityGroup
-buildSecurityGroups securityGroups =
-    []
-
-
 buildNodes : InstancesResponse -> List SecurityGroup -> Dict SubnetId (List Node)
 buildNodes instances securityGroups =
     collectInstances securityGroups instances
@@ -300,3 +253,4 @@ collectSubnet nodesBySubnet subnetResponse subnetsByVpc =
 
 
 -- TODO: write a Dict.updateList and Dict.getOrEmptyList utility
+-- TODO: this instance decoder currently fails when you have a terminated instance, as it will not have a subnetId when terminated

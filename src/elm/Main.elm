@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Api
+import Api.Ports as Ports exposing (AwsCredentials)
 import Browser exposing (Document)
 import Connectivity
 import Element exposing (..)
@@ -8,6 +9,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events exposing (onClick)
 import Element.Input as Input
+import Json.Decode as Json
 import Node exposing (Node)
 import Port exposing (Port)
 import Protocol
@@ -18,16 +20,17 @@ import Vpc.Subnet as Subnet exposing (Subnet)
 main : Program () Model Msg
 main =
     Browser.document
-        { init = always ( Loading, Api.loadAllTheThings VpcsLoaded )
+        { init = init
         , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
 
 
 type Model
-    = Loading
-    | Loaded Loaded_
+    = WaitingForCredentials AwsCredentials
+    | Loading AwsCredentials
+    | Loaded Loaded_ AwsCredentials
 
 
 type alias Loaded_ =
@@ -45,6 +48,21 @@ type Msg
     | PortTyped Port
     | NoOp
     | VpcsLoaded (Result String (List Vpc))
+    | ReceivedVpcs (Result Json.Error (List Vpc))
+    | AccessKeyIdTyped String
+    | SecretAccessKeyTyped String
+    | SubmitCredentialsClicked
+    | Refresh
+
+
+init : () -> ( Model, Cmd msg )
+init _ =
+    ( WaitingForCredentials Ports.emptyCredentials, Cmd.none )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Ports.awsDataReceived (Api.decodeAwsData >> ReceivedVpcs)
 
 
 view : Model -> Document Msg
@@ -67,55 +85,121 @@ update msg model =
             ( model, Cmd.none )
 
         VpcsLoaded (Ok vpcs) ->
-            ( Loaded { vpcs = vpcs, pathSelection = NothingSelected }, Cmd.none )
+            ( Loaded { vpcs = vpcs, pathSelection = NothingSelected } (credentials model), Cmd.none )
 
         VpcsLoaded (Err _) ->
             ( model, Cmd.none )
+
+        ReceivedVpcs (Ok vpcs) ->
+            ( Loaded { vpcs = vpcs, pathSelection = NothingSelected } (credentials model), Cmd.none )
+
+        ReceivedVpcs (Err _) ->
+            ( model, Cmd.none )
+
+        AccessKeyIdTyped id ->
+            ( updateAccessKeyId id model, Cmd.none )
+
+        SecretAccessKeyTyped accessKey ->
+            ( updateSecretAccessKey accessKey model, Cmd.none )
+
+        SubmitCredentialsClicked ->
+            ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
+
+        Refresh ->
+            ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
 
 
 updateSelection : Node -> Model -> Model
 updateSelection nodeSelected model =
     case model of
-        Loading ->
-            Loading
+        Loading creds ->
+            Loading creds
 
-        Loaded loaded ->
+        WaitingForCredentials creds ->
+            WaitingForCredentials creds
+
+        Loaded loaded creds ->
             case loaded.pathSelection of
                 NothingSelected ->
-                    Loaded { loaded | pathSelection = SourceNode nodeSelected }
+                    Loaded { loaded | pathSelection = SourceNode nodeSelected } creds
 
                 SourceNode sourceNode ->
-                    Loaded { loaded | pathSelection = Path { from = sourceNode, to = nodeSelected } 80 }
+                    Loaded { loaded | pathSelection = Path { from = sourceNode, to = nodeSelected } 80 } creds
 
                 Path _ _ ->
-                    Loaded { loaded | pathSelection = SourceNode nodeSelected }
+                    Loaded { loaded | pathSelection = SourceNode nodeSelected } creds
 
 
 updatePort : Port -> Model -> Model
 updatePort portNumber model =
     case model of
-        Loading ->
-            Loading
+        Loading creds ->
+            Loading creds
 
-        Loaded loaded ->
+        WaitingForCredentials creds ->
+            WaitingForCredentials creds
+
+        Loaded loaded creds ->
             case loaded.pathSelection of
                 NothingSelected ->
-                    Loaded loaded
+                    Loaded loaded creds
 
                 SourceNode _ ->
-                    Loaded loaded
+                    Loaded loaded creds
 
                 Path path _ ->
-                    Loaded { loaded | pathSelection = Path path portNumber }
+                    Loaded { loaded | pathSelection = Path path portNumber } creds
+
+
+updateAccessKeyId : String -> Model -> Model
+updateAccessKeyId id model =
+    case model of
+        Loading creds ->
+            Loading creds
+
+        WaitingForCredentials creds ->
+            WaitingForCredentials { creds | accessKeyId = id }
+
+        Loaded loaded creds ->
+            Loaded loaded creds
+
+
+updateSecretAccessKey : String -> Model -> Model
+updateSecretAccessKey key model =
+    case model of
+        Loading creds ->
+            Loading creds
+
+        WaitingForCredentials creds ->
+            WaitingForCredentials { creds | secretAccessKey = key }
+
+        Loaded loaded creds ->
+            Loaded loaded creds
+
+
+credentials : Model -> AwsCredentials
+credentials model =
+    case model of
+        Loading creds ->
+            creds
+
+        WaitingForCredentials creds ->
+            creds
+
+        Loaded _ creds ->
+            creds
 
 
 portSelected : Model -> String
 portSelected model =
     case model of
-        Loading ->
+        Loading _ ->
             "80"
 
-        Loaded loaded ->
+        WaitingForCredentials _ ->
+            "80"
+
+        Loaded loaded _ ->
             case loaded.pathSelection of
                 NothingSelected ->
                     "80"
@@ -130,34 +214,62 @@ portSelected model =
 theWorld : Model -> Element Msg
 theWorld model =
     case model of
-        Loading ->
+        Loading _ ->
             Element.text "Loading..."
 
-        Loaded loaded ->
+        WaitingForCredentials creds ->
+            column [ width fill, spacing 30, padding 20 ]
+                [ text "Please enter your aws credentials below"
+                , Input.text []
+                    { onChange = AccessKeyIdTyped
+                    , text = creds.accessKeyId
+                    , placeholder = Nothing
+                    , label = Input.labelAbove [] (text "Access key")
+                    }
+                , Input.text []
+                    { onChange = SecretAccessKeyTyped
+                    , text = creds.secretAccessKey
+                    , placeholder = Nothing
+                    , label = Input.labelAbove [] (text "Secret Access key")
+                    }
+                , Input.button []
+                    { onPress = Just SubmitCredentialsClicked
+                    , label = text "Submit"
+                    }
+                ]
+
+        Loaded loaded _ ->
             case loaded.pathSelection of
                 NothingSelected ->
-                    row
-                        [ width fill
-                        , height fill
-                        , spacing 10
-                        ]
-                        [ viewVpcs loaded
-                        , internetNode loaded
+                    column [ width fill, height fill, spacing 30 ]
+                        [ refreshButton
+                        , row
+                            [ width fill
+                            , height fill
+                            , spacing 10
+                            ]
+                            [ viewVpcs loaded
+                            , internetNode loaded
+                            ]
                         ]
 
                 SourceNode _ ->
-                    row
-                        [ width fill
-                        , height fill
-                        , spacing 10
-                        ]
-                        [ viewVpcs loaded
-                        , internetNode loaded
+                    column [ width fill, height fill, spacing 30 ]
+                        [ refreshButton
+                        , row
+                            [ width fill
+                            , height fill
+                            , spacing 10
+                            ]
+                            [ viewVpcs loaded
+                            , internetNode loaded
+                            ]
                         ]
 
                 Path path forPort ->
-                    column [ width fill, height fill ]
-                        [ row
+                    column [ width fill, height fill, spacing 30 ]
+                        [ refreshButton
+                        , row
                             [ width fill
                             , height fill
                             , spacing 10
@@ -169,6 +281,11 @@ theWorld model =
                         ]
 
 
+refreshButton : Element Msg
+refreshButton =
+    Input.button [] { onPress = Just Refresh, label = text "Refresh" }
+
+
 showConnectionInfo : { a | from : Node, to : Node } -> Port -> Model -> Element Msg
 showConnectionInfo path forPort model =
     let
@@ -176,7 +293,7 @@ showConnectionInfo path forPort model =
             Connectivity.check
                 { fromNode = path.from
                 , toNode = path.to
-                , forProtocol = Protocol.Tcp
+                , forProtocol = Protocol.tcp
                 , overPort = forPort
                 }
     in
