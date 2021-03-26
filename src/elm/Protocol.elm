@@ -6,9 +6,11 @@ module Protocol exposing
     , tcp
     )
 
--- Protocol
-
 import Json.Decode as Json
+
+
+
+-- Protocol
 
 
 type Protocol

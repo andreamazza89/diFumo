@@ -1,4 +1,10 @@
-module Connectivity exposing (ConnectionIssue(..), Connectivity(..), ConnectivityContext, check, isPossible)
+module Connectivity exposing
+    ( ConnectionIssue(..)
+    , Connectivity(..)
+    , ConnectivityContext
+    , check
+    , isPossible
+    )
 
 import Node exposing (Node)
 import Port exposing (Port)
@@ -6,7 +12,7 @@ import Protocol exposing (Protocol)
 
 
 
----- Connectivity
+-- Connectivity
 
 
 type Connectivity

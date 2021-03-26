@@ -94,7 +94,7 @@ subnetMaskParser =
     Parser.succeed identity
         |. Parser.chompUntil "/"
         |. Parser.symbol "/"
-        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
+        |= Parser.int
 
 
 

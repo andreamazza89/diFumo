@@ -20,8 +20,6 @@ type Ec2
     = Ec2
         { securityGroups : List SecurityGroup -- make nonempty -- maybe this should be lifted to the Node level, as any node other than the Internet has one or more security groups
         , id : Ec2Id
-
-        --, routeTable : RouteTable -- maybe this should be lifted to the Node level, as any node other than the Internet has one route table
         , privateIp : Ipv4Address
         }
 
@@ -58,7 +56,7 @@ idAsString ec2 =
 
 
 hasInternetRoute : Ec2 -> Bool
-hasInternetRoute (Ec2 ec2_) =
+hasInternetRoute (Ec2 _) =
     True
 
 

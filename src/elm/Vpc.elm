@@ -6,9 +6,11 @@ module Vpc exposing
     , subnets
     )
 
--- Vpc
-
 import Vpc.Subnet exposing (Subnet)
+
+
+
+-- Vpc
 
 
 type Vpc
@@ -20,6 +22,10 @@ type Vpc
 
 type Id
     = Id String
+
+
+
+-- Query
 
 
 subnets : Vpc -> List Subnet

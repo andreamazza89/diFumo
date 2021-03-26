@@ -80,7 +80,7 @@ protocolDecoder =
 fromPortDecoder : Json.Decoder Int
 fromPortDecoder =
     Json.oneOf
-        [ Json.field "FromPort" Json.int
+        [ Json.field "FromPort" Port.decoder
         , Json.succeed Port.first -- when FromPort is missing, that means all ports (at least as far as we've seen)
         ]
 
@@ -88,7 +88,7 @@ fromPortDecoder =
 toPortDecoder : Json.Decoder Int
 toPortDecoder =
     Json.oneOf
-        [ Json.field "ToPort" Json.int
+        [ Json.field "ToPort" Port.decoder
         , Json.succeed Port.last -- when ToPort is missing, that means all ports (at least as far as we've seen)
         ]
 

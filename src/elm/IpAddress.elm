@@ -26,20 +26,25 @@ type Ipv4Address
 
 v4FromString : String -> Maybe Ipv4Address
 v4FromString =
-    String.replace "." "-" >> Parser.run ipv4Parser >> Result.withDefault Nothing
+    Parser.run ipv4Parser >> Result.withDefault Nothing
 
 
 ipv4Parser : Parser (Maybe Ipv4Address)
 ipv4Parser =
     Parser.succeed buildV4
-        |. Parser.chompWhile ((==) '"')
-        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
-        |. Parser.symbol "-"
-        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
-        |. Parser.symbol "-"
-        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
-        |. Parser.symbol "-"
-        |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
+        |. Parser.symbol "\""
+        |= Parser.int
+        |. dot
+        |= Parser.int
+        |. dot
+        |= Parser.int
+        |. dot
+        |= Parser.int
+
+
+dot : Parser ()
+dot =
+    Parser.symbol "."
 
 
 madeUpV4 : Ipv4Address

@@ -101,6 +101,7 @@ hasInternetRoute toNode =
             True
 
         Ec2 ec2 ->
+            -- will probably lift this to the Node level as this is based on the route table rather than specific node
             Ec2.hasInternetRoute ec2
 
 

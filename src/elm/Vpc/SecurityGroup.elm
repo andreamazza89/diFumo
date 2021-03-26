@@ -1,5 +1,7 @@
 module Vpc.SecurityGroup exposing
-    ( Rule_
+    (  Rule_
+       -- suspicious - maybe no need for Rule to be opaque..
+
     , SecurityGroup
     , Target
     , allowsEgress

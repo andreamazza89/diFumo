@@ -2,7 +2,6 @@ module Vpc.Subnet exposing
     ( Id
     , Subnet
     , build
-    , buildId
     , idAsString
     , nodes
     )
@@ -42,8 +41,3 @@ idAsString (Subnet { id }) =
 build : String -> List Node -> Subnet
 build id nodes_ =
     Subnet { id = Id id, nodes = nodes_ }
-
-
-buildId : String -> Id
-buildId id_ =
-    Id id_
