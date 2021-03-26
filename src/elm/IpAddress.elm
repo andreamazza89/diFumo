@@ -4,10 +4,16 @@ module IpAddress exposing
     , isBetween
     , madeUpV4
     , plus
+    , v4Decoder
     , v4FromString
     )
 
+import Json.Decode as Json
 import Parser exposing ((|.), (|=), Parser)
+
+
+
+-- Ipv4Address
 
 
 type Ipv4Address
@@ -34,10 +40,6 @@ ipv4Parser =
         |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
         |. Parser.symbol "-"
         |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
-
-
-foo =
-    String.replace
 
 
 madeUpV4 : Ipv4Address
@@ -77,3 +79,19 @@ plus (Ipv4Address address) number =
     -- this is slightly dangerous as it could return an invalid ip address (e.g. 255.255.255.255 + 1), but the
     -- likelihood of it happening vs the ergonomics of making this Maybe made me leave it as 'dangerous'
     Ipv4Address (address + number - 1)
+
+
+
+-- Decode
+
+
+v4Decoder : Json.Decoder Ipv4Address
+v4Decoder =
+    Json.andThen v4Decoder_ Json.string
+
+
+v4Decoder_ : String -> Json.Decoder Ipv4Address
+v4Decoder_ =
+    v4FromString
+        >> Maybe.map Json.succeed
+        >> Maybe.withDefault (Json.fail "could not parse ip")

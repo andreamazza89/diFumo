@@ -1,14 +1,23 @@
 module Protocol exposing
     ( Protocol
     , all
+    , decoder
     , matches
     , tcp
     )
+
+-- Protocol
+
+import Json.Decode as Json
 
 
 type Protocol
     = Tcp
     | All
+
+
+
+-- Build
 
 
 tcp : Protocol
@@ -19,6 +28,10 @@ tcp =
 all : Protocol
 all =
     All
+
+
+
+-- Query
 
 
 matches : Protocol -> Protocol -> Bool
@@ -32,3 +45,24 @@ matches this that =
 
         ( _, All ) ->
             True
+
+
+
+-- Decode
+
+
+decoder : Json.Decoder Protocol
+decoder =
+    Json.string
+        |> Json.andThen
+            (\protocol ->
+                case protocol of
+                    "tcp" ->
+                        Json.succeed tcp
+
+                    "-1" ->
+                        Json.succeed all
+
+                    _ ->
+                        Json.fail ("Unrecognised ip protocol: " ++ protocol)
+            )

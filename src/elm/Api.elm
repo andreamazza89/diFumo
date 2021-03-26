@@ -1,8 +1,4 @@
-module Api exposing
-    ( VpcsResponse
-    , decodeAwsData
-    , vpcsDecoder
-    )
+module Api exposing (decodeAwsData)
 
 import Cidr exposing (Cidr)
 import Dict exposing (Dict)
@@ -10,7 +6,7 @@ import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
 import Node exposing (Node)
 import Port
-import Protocol
+import Protocol exposing (Protocol)
 import Vpc exposing (Vpc)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
@@ -21,9 +17,9 @@ decodeAwsData =
     Json.decodeValue awsDataDecoder >> Result.map buildVpcs
 
 
-awsDataDecoder : Json.Decoder AllTheData
+awsDataDecoder : Json.Decoder AwsData
 awsDataDecoder =
-    Json.map4 AllTheData
+    Json.map4 AwsData
         (Json.field "vpcsResponse" vpcsDecoder)
         (Json.field "subnetsResponse" subnetsDecoder)
         (Json.field "securityGroupsResponse" securityGroupsDecoder)
@@ -32,44 +28,60 @@ awsDataDecoder =
 
 vpcsDecoder : Json.Decoder VpcsResponse
 vpcsDecoder =
-    Json.list (Json.map VpcResponse (Json.field "VpcId" Json.string))
+    Json.list vpcDecoder
+
+
+vpcDecoder : Json.Decoder VpcResponse
+vpcDecoder =
+    Json.map VpcResponse (Json.field "VpcId" Json.string)
 
 
 subnetsDecoder : Json.Decoder (List SubnetResponse)
 subnetsDecoder =
-    Json.list
-        (Json.map2 SubnetResponse
-            (Json.field "SubnetId" Json.string)
-            (Json.field "VpcId" Json.string)
-        )
+    Json.list subnetDecoder
+
+
+subnetDecoder : Json.Decoder SubnetResponse
+subnetDecoder =
+    Json.map2 SubnetResponse
+        (Json.field "SubnetId" Json.string)
+        (Json.field "VpcId" Json.string)
 
 
 securityGroupsDecoder : Json.Decoder (List SecurityGroup)
 securityGroupsDecoder =
-    Json.list
-        (Json.map3 SecurityGroup.build
-            (Json.field "GroupId" Json.string)
-            (Json.field "IpPermissions" rulesDecoder)
-            (Json.field "IpPermissionsEgress" rulesDecoder)
-        )
+    Json.list securityGroupDecoder
+
+
+securityGroupDecoder : Json.Decoder SecurityGroup
+securityGroupDecoder =
+    Json.map3 SecurityGroup.build
+        (Json.field "GroupId" Json.string)
+        (Json.field "IpPermissions" rulesDecoder)
+        (Json.field "IpPermissionsEgress" rulesDecoder)
 
 
 rulesDecoder : Json.Decoder (List SecurityGroup.Rule_)
 rulesDecoder =
     Json.list
         (Json.map4 SecurityGroup.Rule_
-            (Json.field "IpProtocol" protocolDecoder)
+            protocolDecoder
             fromPortDecoder
             toPortDecoder
-            (Json.field "IpRanges" (Json.list cidrDecoder))
+            cidrsDecoder
         )
+
+
+protocolDecoder : Json.Decoder Protocol
+protocolDecoder =
+    Json.field "IpProtocol" Protocol.decoder
 
 
 fromPortDecoder : Json.Decoder Int
 fromPortDecoder =
     Json.oneOf
         [ Json.field "FromPort" Json.int
-        , Json.succeed Port.first
+        , Json.succeed Port.first -- when FromPort is missing, that means all ports (at least as far as we've seen)
         ]
 
 
@@ -77,35 +89,18 @@ toPortDecoder : Json.Decoder Int
 toPortDecoder =
     Json.oneOf
         [ Json.field "ToPort" Json.int
-        , Json.succeed Port.last
+        , Json.succeed Port.last -- when ToPort is missing, that means all ports (at least as far as we've seen)
         ]
 
 
-protocolDecoder : Json.Decoder Protocol.Protocol
-protocolDecoder =
-    Json.string
-        |> Json.andThen
-            (\protocol ->
-                case protocol of
-                    "tcp" ->
-                        Json.succeed Protocol.tcp
-
-                    "-1" ->
-                        Json.succeed Protocol.all
-
-                    _ ->
-                        Json.fail ("Unrecognised ip protocol: " ++ protocol)
-            )
+cidrsDecoder : Json.Decoder (List Cidr)
+cidrsDecoder =
+    Json.field "IpRanges" (Json.list cidrDecoder)
 
 
 cidrDecoder : Json.Decoder Cidr
 cidrDecoder =
-    Json.field "CidrIp" Json.string
-        |> Json.andThen
-            (Cidr.fromString
-                >> Maybe.map Json.succeed
-                >> Maybe.withDefault (Json.fail "could not parse cidr")
-            )
+    Json.field "CidrIp" Cidr.decoder
 
 
 instancesDecoder : Json.Decoder (List InstanceResponse)
@@ -119,21 +114,11 @@ instanceDecoder =
     Json.map4 InstanceResponse
         (Json.field "InstanceId" Json.string)
         (Json.field "SubnetId" Json.string)
-        (Json.field "PrivateIpAddress" decodeIpv4)
+        (Json.field "PrivateIpAddress" IpAddress.v4Decoder)
         (Json.field "SecurityGroups" (Json.list (Json.field "GroupId" Json.string)))
 
 
-decodeIpv4 : Json.Decoder Ipv4Address
-decodeIpv4 =
-    Json.string
-        |> Json.andThen
-            (IpAddress.v4FromString
-                >> Maybe.map Json.succeed
-                >> Maybe.withDefault (Json.fail "could not parse ip")
-            )
-
-
-type alias AllTheData =
+type alias AwsData =
     { vpcs : VpcsResponse
     , subnets : SubnetsResponse
     , securityGroups : List SecurityGroup
@@ -161,10 +146,6 @@ type alias InstanceResponse =
     }
 
 
-type alias SecurityGroupsResponse =
-    List {}
-
-
 type alias SubnetsResponse =
     List SubnetResponse
 
@@ -183,7 +164,7 @@ type alias VpcId =
     String
 
 
-buildVpcs : AllTheData -> List Vpc
+buildVpcs : AwsData -> List Vpc
 buildVpcs { vpcs, subnets, securityGroups, instances } =
     buildNodes instances securityGroups
         |> buildSubnets subnets

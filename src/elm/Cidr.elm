@@ -3,12 +3,22 @@ module Cidr exposing
     , SubnetMask
     , build
     , contains
+    , decoder
     , everywhere
     , fromString
     )
 
 import IpAddress exposing (Ipv4Address)
+import Json.Decode as Json
 import Parser exposing ((|.), (|=), Parser)
+
+
+
+-- Cidr
+--   - stands for Classless Inter-Domain Routing
+--   - it represents a range of addresses
+--   - looks like  10.0.0.0 / 16
+--    first in range---^       ^---range size
 
 
 type Cidr
@@ -85,3 +95,19 @@ subnetMaskParser =
         |. Parser.chompUntil "/"
         |. Parser.symbol "/"
         |= Parser.number { int = Just identity, hex = Nothing, octal = Nothing, binary = Nothing, float = Nothing }
+
+
+
+-- Decoder
+
+
+decoder : Json.Decoder Cidr
+decoder =
+    Json.andThen decoder_ Json.string
+
+
+decoder_ : String -> Json.Decoder Cidr
+decoder_ =
+    fromString
+        >> Maybe.map Json.succeed
+        >> Maybe.withDefault (Json.fail "could not parse cidr")
