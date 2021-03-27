@@ -9,6 +9,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events exposing (onClick)
 import Element.Input as Input
+import IpAddress
 import Json.Decode as Json
 import Node exposing (Node)
 import Port exposing (Port)
@@ -19,6 +20,11 @@ import Vpc.Subnet as Subnet exposing (Subnet)
 
 main : Program () Model Msg
 main =
+    let
+        _ =
+            IpAddress.v4FromString "1.2.3.4"
+                |> Debug.log "hi"
+    in
     Browser.document
         { init = init
         , view = view
@@ -332,6 +338,9 @@ viewIssue issue =
     case issue of
         Connectivity.MissingEgressRule ->
             text "Egress (Explain here why a certain security group is missing an egress rule to allow outbound traffic)"
+
+        Connectivity.MissingIngressRule ->
+            text "Ingress (Explain here why a certain security group is missing an ingress rule to allow outbound traffic)"
 
         Connectivity.RouteTableHasNoInternetAccess ->
             text "Route table (Explain here why the route table for the source node does not allow internet traffic)"

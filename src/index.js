@@ -33,6 +33,7 @@ ports.fetchAwsData.subscribe(creds => {
                     securityGroupsResponse : securityGroups.SecurityGroups,
                     instancesResponse : instances.Reservations
                 }
+                console.log(awsData)
                 ports.awsDataReceived.send(awsData)
             })
     }

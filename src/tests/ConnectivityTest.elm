@@ -46,7 +46,7 @@ suite =
 -- Ec2 Fixture
 
 
-build : Ec2.Config
+build : Ec2.Config Node.Config
 build =
     { id = "some-id"
     , securityGroups = []
@@ -54,12 +54,12 @@ build =
     }
 
 
-withGroup : SecurityGroup -> Ec2.Config -> Ec2.Config
+withGroup : SecurityGroup -> Ec2.Config Node.Config -> Ec2.Config Node.Config
 withGroup group builder =
     { builder | securityGroups = group :: builder.securityGroups }
 
 
-toNode : Ec2.Config -> Node
+toNode : Ec2.Config Node.Config -> Node
 toNode builder =
     Node.buildEc2 builder
 

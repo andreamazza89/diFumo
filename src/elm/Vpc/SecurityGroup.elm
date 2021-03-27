@@ -51,13 +51,23 @@ type alias Target =
     }
 
 
-allowsEgress : Target -> SecurityGroup -> Bool
-allowsEgress target (SecurityGroup { egress }) =
+allowsEgress : Target -> List SecurityGroup -> Bool
+allowsEgress target =
+    List.any (allowsEgress_ target)
+
+
+allowsEgress_ : Target -> SecurityGroup -> Bool
+allowsEgress_ target (SecurityGroup { egress }) =
     List.any (ruleMatches target) egress
 
 
-allowsIngress : Target -> SecurityGroup -> Bool
-allowsIngress target (SecurityGroup { ingress }) =
+allowsIngress : Target -> List SecurityGroup -> Bool
+allowsIngress target =
+    List.any (allowsIngress_ target)
+
+
+allowsIngress_ : Target -> SecurityGroup -> Bool
+allowsIngress_ target (SecurityGroup { ingress }) =
     List.any (ruleMatches target) ingress
 
 
