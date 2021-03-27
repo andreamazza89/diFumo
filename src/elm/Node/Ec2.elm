@@ -2,6 +2,7 @@ module Node.Ec2 exposing
     ( Config
     , Ec2
     , allowsEgress
+    , allowsIngress
     , build
     , build2
     , equals
@@ -63,6 +64,11 @@ hasInternetRoute (Ec2 _) =
 allowsEgress : SecurityGroup.Target -> Ec2 -> Bool
 allowsEgress target ec2 =
     List.any (SecurityGroup.allowsEgress target) (securityGroups ec2)
+
+
+allowsIngress : SecurityGroup.Target -> Ec2 -> Bool
+allowsIngress target ec2 =
+    List.any (SecurityGroup.allowsIngress target) (securityGroups ec2)
 
 
 

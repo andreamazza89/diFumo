@@ -5,6 +5,7 @@ module Vpc.SecurityGroup exposing
     , SecurityGroup
     , Target
     , allowsEgress
+    , allowsIngress
     , build
     , idAsString
     )
@@ -44,7 +45,7 @@ type alias Rule_ =
 
 
 type alias Target =
-    { toIp : Ipv4Address
+    { ip : Ipv4Address
     , forProtocol : Protocol
     , overPort : Port
     }
@@ -55,9 +56,14 @@ allowsEgress target (SecurityGroup { egress }) =
     List.any (ruleMatches target) egress
 
 
+allowsIngress : Target -> SecurityGroup -> Bool
+allowsIngress target (SecurityGroup { ingress }) =
+    List.any (ruleMatches target) ingress
+
+
 ruleMatches : Target -> Rule -> Bool
 ruleMatches target (Rule rule_) =
-    List.any (Cidr.contains target.toIp) rule_.cidrs
+    List.any (Cidr.contains target.ip) rule_.cidrs
         && Protocol.matches target.forProtocol rule_.forProtocol
         && Port.isWithin rule_ target.overPort
 

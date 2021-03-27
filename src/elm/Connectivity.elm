@@ -22,6 +22,7 @@ type Connectivity
 
 type ConnectionIssue
     = MissingEgressRule
+    | MissingIngressRule
     | RouteTableHasNoInternetAccess
 
 
@@ -62,6 +63,7 @@ check : ConnectivityContext -> Connectivity
 check context =
     checkInternet context
         |> combineWith (checkEgressRules context)
+        |> combineWith (checkIngressRules context)
 
 
 checkInternet : ConnectivityContext -> Connectivity
@@ -84,3 +86,12 @@ checkEgressRules { fromNode, toNode, forProtocol, overPort } =
 
     else
         NotPossible [ MissingEgressRule ]
+
+
+checkIngressRules : ConnectivityContext -> Connectivity
+checkIngressRules { fromNode, toNode, forProtocol, overPort } =
+    if Node.allowsIngress fromNode toNode forProtocol overPort then
+        Possible
+
+    else
+        NotPossible [ MissingIngressRule ]

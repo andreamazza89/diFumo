@@ -1,6 +1,7 @@
 module Node exposing
     ( Node
     , allowsEgress
+    , allowsIngress
     , buildEc2
     , equals
     , hasInternetRoute
@@ -79,15 +80,31 @@ idAsString node_ =
 
 
 allowsEgress : Node -> Node -> Protocol -> Port -> Bool
-allowsEgress node toNode forProtocol overPort =
-    case node of
+allowsEgress fromNode toNode forProtocol overPort =
+    case fromNode of
         Internet ->
-            -- If the source node is the internet, then security groups do not apply
+            -- If the source node is the internet, then there are no egress rules to check
             True
 
         Ec2 ec2 ->
             Ec2.allowsEgress
-                { toIp = ipv4Address toNode
+                { ip = ipv4Address toNode
+                , forProtocol = forProtocol
+                , overPort = overPort
+                }
+                ec2
+
+
+allowsIngress : Node -> Node -> Protocol -> Port -> Bool
+allowsIngress fromNode toNode forProtocol overPort =
+    case toNode of
+        Internet ->
+            -- If the destination node is the internet, then there are no ingress rules to check
+            True
+
+        Ec2 ec2 ->
+            Ec2.allowsIngress
+                { ip = ipv4Address fromNode
                 , forProtocol = forProtocol
                 , overPort = overPort
                 }

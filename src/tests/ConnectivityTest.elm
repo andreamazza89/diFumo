@@ -15,17 +15,29 @@ import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 suite : Test
 suite =
     describe "Connectivity"
-        [ describe "Ec2s and the internet"
-            [ test "internet traffic allowed with allowAll security group" <|
+        [ describe "Ec2 --> internet"
+            [ test "ec2 can reach internet with allowAll security group" <|
                 \_ ->
                     tcpConnectivitySuccess 80
                         (build |> withGroup allowAllInOut |> toNode)
                         internet
-            , test "internet traffic not allowed with empty security group" <|
+            , test "ec2 cannot reach internet with empty security group" <|
                 \_ ->
                     tcpConnectivityFailure 80
                         (build |> withGroup allowNothing |> toNode)
                         internet
+            ]
+        , describe "internet --> Ec2"
+            [ test "internet can reach ec2 with allowAll security group" <|
+                \_ ->
+                    tcpConnectivitySuccess 80
+                        internet
+                        (build |> withGroup allowAllInOut |> toNode)
+            , test "internet cannot reach ec2 with empty security group" <|
+                \_ ->
+                    tcpConnectivityFailure 80
+                        internet
+                        (build |> withGroup allowNothing |> toNode)
             ]
         ]
 
