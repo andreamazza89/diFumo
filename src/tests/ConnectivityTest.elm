@@ -59,6 +59,7 @@ withGroup group builder =
     { builder | securityGroups = group :: builder.securityGroups }
 
 
+toNode : Ec2.Config -> Node
 toNode builder =
     Node.buildEc2 builder
 
