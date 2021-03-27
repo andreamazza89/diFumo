@@ -1,15 +1,15 @@
 module ConnectivityTest exposing (suite)
 
-import Cidr
 import Connectivity exposing (Connectivity, ConnectivityContext)
 import Expect
+import Fixtures.SecurityGroup exposing (allowAllInOut, allowNothing)
 import IpAddress exposing (Ipv4Address)
 import Node exposing (Node)
 import Node.Ec2 as Ec2
 import Port exposing (Port)
 import Protocol
 import Test exposing (Test, describe, test)
-import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
+import Vpc.SecurityGroup exposing (SecurityGroup)
 
 
 suite : Test
@@ -43,30 +43,6 @@ suite =
 
 
 
--- SecurityGroup Fixture
-
-
-allowAllInOut : SecurityGroup
-allowAllInOut =
-    SecurityGroup.build "some-security-group-id" allowAll allowAll
-
-
-allowNothing : SecurityGroup
-allowNothing =
-    SecurityGroup.build "some-security-group-id" [] []
-
-
-allowAll : List SecurityGroup.Rule_
-allowAll =
-    [ { forProtocol = Protocol.all
-      , fromPort = Port.first
-      , toPort = Port.last
-      , cidrs = [ Cidr.everywhere ]
-      }
-    ]
-
-
-
 -- Ec2 Fixture
 
 
@@ -94,6 +70,10 @@ toNode builder =
 internet : Node
 internet =
     Node.internet
+
+
+
+-- Connectivity assertion helpers
 
 
 isPossible : Connectivity -> Expect.Expectation
