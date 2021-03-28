@@ -1,5 +1,6 @@
 module ConnectivityTest exposing (suite)
 
+import Cidr
 import Connectivity exposing (Connectivity, ConnectivityContext)
 import Expect
 import Fixtures.SecurityGroup exposing (allowAllInOut, allowNothing)
@@ -9,6 +10,7 @@ import Node.Ec2 as Ec2
 import Port exposing (Port)
 import Protocol
 import Test exposing (Test, describe, test)
+import Vpc.RouteTable as RouteTable exposing (RouteTable)
 import Vpc.SecurityGroup exposing (SecurityGroup)
 
 
@@ -16,28 +18,56 @@ suite : Test
 suite =
     describe "Connectivity"
         [ describe "Ec2 --> internet"
-            [ test "ec2 can reach internet with allowAll security group" <|
+            [ test "ec2 can reach internet" <|
                 \_ ->
-                    tcpConnectivitySuccess 80
-                        (build |> withGroup allowAllInOut |> toNode)
-                        internet
+                    tcpConnectivitySuccess
+                        { from =
+                            build
+                                |> withGroup allowAllInOut
+                                |> withTable internetTable
+                                |> toNode
+                        , to = internet
+                        }
             , test "ec2 cannot reach internet with empty security group" <|
                 \_ ->
-                    tcpConnectivityFailure 80
-                        (build |> withGroup allowNothing |> toNode)
-                        internet
+                    tcpConnectivityFailure
+                        { from =
+                            build
+                                |> withGroup allowNothing
+                                |> withTable internetTable
+                                |> toNode
+                        , to = internet
+                        }
+            , test "ec2 cannot reach internet with local route table" <|
+                \_ ->
+                    tcpConnectivityFailure
+                        { from =
+                            build
+                                |> withGroup allowAllInOut
+                                |> withTable localTable
+                                |> toNode
+                        , to = internet
+                        }
             ]
         , describe "internet --> Ec2"
             [ test "internet can reach ec2 with allowAll security group" <|
                 \_ ->
-                    tcpConnectivitySuccess 80
-                        internet
-                        (build |> withGroup allowAllInOut |> toNode)
+                    tcpConnectivitySuccess
+                        { from = internet
+                        , to =
+                            build
+                                |> withGroup allowAllInOut
+                                |> toNode
+                        }
             , test "internet cannot reach ec2 with empty security group" <|
                 \_ ->
-                    tcpConnectivityFailure 80
-                        internet
-                        (build |> withGroup allowNothing |> toNode)
+                    tcpConnectivityFailure
+                        { from = internet
+                        , to =
+                            build
+                                |> withGroup allowNothing
+                                |> toNode
+                        }
             ]
         ]
 
@@ -51,12 +81,18 @@ build =
     { id = "some-id"
     , securityGroups = []
     , privateIp = IpAddress.madeUpV4
+    , routeTable = localTable
     }
 
 
 withGroup : SecurityGroup -> Ec2.Config Node.Config -> Ec2.Config Node.Config
 withGroup group builder =
     { builder | securityGroups = group :: builder.securityGroups }
+
+
+withTable : RouteTable -> Ec2.Config Node.Config -> Ec2.Config Node.Config
+withTable table builder =
+    { builder | routeTable = table }
 
 
 toNode : Ec2.Config Node.Config -> Node
@@ -66,6 +102,21 @@ toNode builder =
 
 
 -- end of Ec2 Fixture
+-- Route Table Fixture
+
+
+localTable : RouteTable
+localTable =
+    RouteTable.build []
+
+
+internetTable : RouteTable
+internetTable =
+    RouteTable.build [ ( Cidr.everywhere, RouteTable.internetGateway ) ]
+
+
+
+-- end of Route Table Fixture
 
 
 internet : Node
@@ -97,11 +148,13 @@ checkTcpConnectivity overPort from to =
         }
 
 
-tcpConnectivitySuccess : Port -> Node -> Node -> Expect.Expectation
-tcpConnectivitySuccess overPort from =
-    checkTcpConnectivity overPort from >> isPossible
+tcpConnectivitySuccess : { from : Node, to : Node } -> Expect.Expectation
+tcpConnectivitySuccess { from, to } =
+    checkTcpConnectivity 80 from to
+        |> isPossible
 
 
-tcpConnectivityFailure : Port -> Node -> Node -> Expect.Expectation
-tcpConnectivityFailure overPort from =
-    checkTcpConnectivity overPort from >> isNotPossible
+tcpConnectivityFailure : { from : Node, to : Node } -> Expect.Expectation
+tcpConnectivityFailure { from, to } =
+    checkTcpConnectivity 80 from to
+        |> isNotPossible

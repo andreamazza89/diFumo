@@ -5,16 +5,16 @@ module Node exposing
     , allowsIngress
     , buildEc2
     , equals
-    , hasInternetRoute
+    , hasRouteTo
     , idAsString
     , internet
-    , isInternet
     )
 
 import IpAddress exposing (Ipv4Address)
 import Node.Ec2 as Ec2 exposing (Ec2)
 import Port exposing (Port)
 import Protocol exposing (Protocol)
+import Vpc.RouteTable as RouteTable exposing (RouteTable)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 
 
@@ -39,6 +39,7 @@ type VpcNode
 type alias Node_ =
     { ipv4Address : Ipv4Address
     , securityGroups : List SecurityGroup
+    , routeTable : RouteTable
     }
 
 
@@ -75,16 +76,6 @@ ipv4Address node =
 
         Vpc node_ _ ->
             node_.ipv4Address
-
-
-isInternet : Node -> Bool
-isInternet node =
-    case node of
-        Internet ->
-            True
-
-        _ ->
-            False
 
 
 idAsString : Node -> String
@@ -133,15 +124,14 @@ allowsIngress fromNode toNode forProtocol overPort =
             SecurityGroup.allowsIngress target securityGroups
 
 
-hasInternetRoute : Node -> Bool
-hasInternetRoute toNode =
-    case toNode of
+hasRouteTo : Node -> Node -> Bool
+hasRouteTo toNode fromNode =
+    case fromNode of
         Internet ->
             True
 
-        Vpc _ (Ec2 ec2) ->
-            -- will probably lift this to the Node level as this is based on the route table rather than specific node
-            Ec2.hasInternetRoute ec2
+        Vpc vpcNode _ ->
+            RouteTable.hasRouteTo (ipv4Address toNode) vpcNode.routeTable
 
 
 
@@ -151,6 +141,7 @@ hasInternetRoute toNode =
 type alias Config =
     { privateIp : Ipv4Address
     , securityGroups : List SecurityGroup
+    , routeTable : RouteTable
     }
 
 
@@ -159,6 +150,7 @@ buildEc2 config =
     Vpc
         { ipv4Address = config.privateIp
         , securityGroups = config.securityGroups
+        , routeTable = config.routeTable
         }
         (Ec2 (Ec2.build config))
 

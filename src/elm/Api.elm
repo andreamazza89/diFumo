@@ -8,6 +8,7 @@ import Node exposing (Node)
 import Port
 import Protocol exposing (Protocol)
 import Vpc exposing (Vpc)
+import Vpc.RouteTable as RouteTable
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
@@ -199,6 +200,7 @@ collectInstance securityGroups instance nodesBySubnet =
                 { id = instance.id
                 , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) instance.securityGroups) securityGroups
                 , privateIp = instance.privateIp
+                , routeTable = RouteTable.build [] -- TODO use the actual one rather than stub
                 }
 
         addInstance nodes =

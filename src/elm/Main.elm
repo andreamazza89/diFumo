@@ -345,6 +345,9 @@ viewIssue issue =
         Connectivity.RouteTableHasNoInternetAccess ->
             text "Route table (Explain here why the route table for the source node does not allow internet traffic)"
 
+        Connectivity.RouteTableHasNoEntryForTargetAddress ->
+            text "Route table (Explain here why the route table for the source node does have a route to the target address)"
+
 
 internetNode : Loaded_ -> Element Msg
 internetNode model =
