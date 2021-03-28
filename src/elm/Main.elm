@@ -336,9 +336,6 @@ viewIssue issue =
         Connectivity.MissingIngressRule ->
             text "Ingress (Explain here why a certain security group is missing an ingress rule to allow outbound traffic)"
 
-        Connectivity.RouteTableHasNoInternetAccess ->
-            text "Route table (Explain here why the route table for the source node does not allow internet traffic)"
-
         Connectivity.RouteTableHasNoEntryForTargetAddress ->
             text "Route table (Explain here why the route table for the source node does have a route to the target address)"
 

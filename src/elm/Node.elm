@@ -4,10 +4,12 @@ module Node exposing
     , allowsEgress
     , allowsIngress
     , buildEc2
+    , canAccessInternet
     , equals
     , hasRouteTo
     , idAsString
     , internet
+    , isInternet
     )
 
 import IpAddress exposing (Ipv4Address)
@@ -45,6 +47,16 @@ type alias Node_ =
 
 
 -- Query
+
+
+isInternet : Node -> Bool
+isInternet node =
+    case node of
+        Internet ->
+            True
+
+        _ ->
+            False
 
 
 equals : Node -> Node -> Bool
@@ -132,6 +144,21 @@ hasRouteTo toNode fromNode =
 
         Vpc vpcNode _ ->
             RouteTable.hasRouteTo (ipv4Address toNode) vpcNode.routeTable
+
+
+canAccessInternet node =
+    case node of
+        Internet ->
+            True
+
+        Vpc _ specificNode ->
+            vpcNodeCanAccessInternet specificNode
+
+
+vpcNodeCanAccessInternet node =
+    case node of
+        Ec2 ec2 ->
+            Ec2.canAccessInternet ec2
 
 
 

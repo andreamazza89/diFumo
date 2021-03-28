@@ -23,7 +23,6 @@ type Connectivity
 type ConnectionIssue
     = MissingEgressRule
     | MissingIngressRule
-    | RouteTableHasNoInternetAccess
     | RouteTableHasNoEntryForTargetAddress
 
 
@@ -62,18 +61,19 @@ type alias ConnectivityContext =
 
 check : ConnectivityContext -> Connectivity
 check context =
-    checkEgressRules context
+    checkSecurityGroups context
         |> combineWith (checkRouteTable context)
+        |> combineWith (checkInternet context)
+
+
+
+-- Security groups
+
+
+checkSecurityGroups : ConnectivityContext -> Connectivity
+checkSecurityGroups context =
+    checkEgressRules context
         |> combineWith (checkIngressRules context)
-
-
-checkRouteTable : ConnectivityContext -> Connectivity
-checkRouteTable { fromNode, toNode } =
-    if Node.hasRouteTo toNode fromNode then
-        Possible
-
-    else
-        NotPossible [ RouteTableHasNoEntryForTargetAddress ]
 
 
 checkEgressRules : ConnectivityContext -> Connectivity
@@ -92,3 +92,32 @@ checkIngressRules { fromNode, toNode, forProtocol, overPort } =
 
     else
         NotPossible [ MissingIngressRule ]
+
+
+
+-- Route tables
+
+
+checkRouteTable : ConnectivityContext -> Connectivity
+checkRouteTable { fromNode, toNode } =
+    if Node.hasRouteTo toNode fromNode then
+        Possible
+
+    else
+        NotPossible [ RouteTableHasNoEntryForTargetAddress ]
+
+
+
+-- Internet
+
+
+checkInternet { fromNode, toNode } =
+    if Node.isInternet toNode then
+        if Node.canAccessInternet fromNode then
+            Possible
+
+        else
+            NotPossible []
+
+    else
+        Possible

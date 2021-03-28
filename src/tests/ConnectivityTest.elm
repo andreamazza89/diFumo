@@ -1,122 +1,87 @@
 module ConnectivityTest exposing (suite)
 
-import Cidr
 import Connectivity exposing (Connectivity, ConnectivityContext)
 import Expect
+import Fixtures.Ec2 as Ec2
+import Fixtures.RouteTable as RouteTable
 import Fixtures.SecurityGroup exposing (allowAllInOut, allowNothing)
-import IpAddress exposing (Ipv4Address)
 import Node exposing (Node)
-import Node.Ec2 as Ec2
 import Port exposing (Port)
 import Protocol
 import Test exposing (Test, describe, test)
-import Vpc.RouteTable as RouteTable exposing (RouteTable)
-import Vpc.SecurityGroup exposing (SecurityGroup)
 
 
 suite : Test
 suite =
     describe "Connectivity"
-        [ describe "Ec2 --> internet"
+        [ describe "Ec2 --> Internet"
             [ test "ec2 can reach internet" <|
                 \_ ->
                     tcpConnectivitySuccess
                         { from =
-                            build
-                                |> withGroup allowAllInOut
-                                |> withTable internetTable
-                                |> toNode
+                            Ec2.build
+                                |> Ec2.withGroup allowAllInOut
+                                |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withPublicIp
+                                |> Ec2.toNode
                         , to = internet
                         }
             , test "ec2 cannot reach internet with empty security group" <|
                 \_ ->
                     tcpConnectivityFailure
                         { from =
-                            build
-                                |> withGroup allowNothing
-                                |> withTable internetTable
-                                |> toNode
+                            Ec2.build
+                                |> Ec2.withGroup allowNothing
+                                |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withPublicIp
+                                |> Ec2.toNode
                         , to = internet
                         }
             , test "ec2 cannot reach internet with local route table" <|
                 \_ ->
                     tcpConnectivityFailure
                         { from =
-                            build
-                                |> withGroup allowAllInOut
-                                |> withTable localTable
-                                |> toNode
+                            Ec2.build
+                                |> Ec2.withGroup allowAllInOut
+                                |> Ec2.withTable RouteTable.localTable
+                                |> Ec2.withPublicIp
+                                |> Ec2.toNode
+                        , to = internet
+                        }
+            , test "ec2 cannot reach internet without a public ip" <|
+                \_ ->
+                    tcpConnectivityFailure
+                        { from =
+                            Ec2.build
+                                |> Ec2.withGroup allowAllInOut
+                                |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNoPublicIp
+                                |> Ec2.toNode
                         , to = internet
                         }
             ]
-        , describe "internet --> Ec2"
+        , describe "Internet --> Ec2"
             [ test "internet can reach ec2 with allowAll security group" <|
                 \_ ->
                     tcpConnectivitySuccess
                         { from = internet
                         , to =
-                            build
-                                |> withGroup allowAllInOut
-                                |> toNode
+                            Ec2.build
+                                |> Ec2.withGroup allowAllInOut
+                                |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.toNode
                         }
             , test "internet cannot reach ec2 with empty security group" <|
                 \_ ->
                     tcpConnectivityFailure
                         { from = internet
                         , to =
-                            build
-                                |> withGroup allowNothing
-                                |> toNode
+                            Ec2.build
+                                |> Ec2.withGroup allowNothing
+                                |> Ec2.toNode
                         }
             ]
         ]
-
-
-
--- Ec2 Fixture
-
-
-build : Ec2.Config Node.Config
-build =
-    { id = "some-id"
-    , securityGroups = []
-    , privateIp = IpAddress.madeUpV4
-    , routeTable = localTable
-    }
-
-
-withGroup : SecurityGroup -> Ec2.Config Node.Config -> Ec2.Config Node.Config
-withGroup group builder =
-    { builder | securityGroups = group :: builder.securityGroups }
-
-
-withTable : RouteTable -> Ec2.Config Node.Config -> Ec2.Config Node.Config
-withTable table builder =
-    { builder | routeTable = table }
-
-
-toNode : Ec2.Config Node.Config -> Node
-toNode builder =
-    Node.buildEc2 builder
-
-
-
--- end of Ec2 Fixture
--- Route Table Fixture
-
-
-localTable : RouteTable
-localTable =
-    RouteTable.build []
-
-
-internetTable : RouteTable
-internetTable =
-    RouteTable.build [ ( Cidr.everywhere, RouteTable.internetGateway ) ]
-
-
-
--- end of Route Table Fixture
 
 
 internet : Node
