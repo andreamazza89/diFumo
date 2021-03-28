@@ -36,7 +36,6 @@ ports.fetchAwsData.subscribe(creds => {
                     instancesResponse : instances.Reservations,
                     routeTablesResponse : routeTables.RouteTables
                 }
-                console.log(awsData)
                 ports.awsDataReceived.send(awsData)
             })
     }

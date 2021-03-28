@@ -13,7 +13,7 @@ import Vpc.Subnet as Subnet exposing (Subnet)
 
 decodeAwsData : Json.Value -> Result Json.Error (List Vpc)
 decodeAwsData =
-    Json.decodeValue awsDataDecoder >> Result.map buildVpcs
+    Json.decodeValue awsDataDecoder >> Debug.log "" >> Result.map buildVpcs
 
 
 awsDataDecoder : Json.Decoder AwsData
@@ -61,12 +61,25 @@ instancesDecoder =
 
 instanceDecoder : Json.Decoder InstanceResponse
 instanceDecoder =
-    Json.map5 InstanceResponse
+    Json.map6 InstanceResponse
         (Json.field "InstanceId" Json.string)
         (Json.field "SubnetId" Json.string)
         (Json.field "PrivateIpAddress" IpAddress.v4Decoder)
+        publicIpDecoder
         (Json.field "SecurityGroups" (Json.list (Json.field "GroupId" Json.string)))
         (Json.field "VpcId" Json.string)
+
+
+publicIpDecoder : Json.Decoder (Maybe Ipv4Address)
+publicIpDecoder =
+    Json.oneOf
+        [ Json.field "PublicIpAddress" IpAddress.v4Decoder |> Json.map Just
+        , Json.succeed Nothing
+        ]
+
+
+
+--- GOTTA CHECK OUT THE PUBLIC IP ADDRESS SITUATION
 
 
 type alias AwsData =
@@ -94,6 +107,7 @@ type alias InstanceResponse =
     { id : String
     , subnetId : String
     , privateIp : Ipv4Address
+    , publicIp : Maybe Ipv4Address
     , securityGroups : List String
     , vpcId : VpcId
     }
@@ -182,6 +196,7 @@ collectInstance securityGroups routeTables instance nodesBySubnet =
                 , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) instance.securityGroups) securityGroups
                 , privateIp = instance.privateIp
                 , routeTable = findRouteTable instance.vpcId instance.subnetId routeTables
+                , publicIp = instance.publicIp
                 }
 
         addInstance nodes =

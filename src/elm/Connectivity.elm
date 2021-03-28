@@ -25,6 +25,8 @@ type ConnectionIssue
     | MissingIngressRule
     | RouteTableForSourceHasNoEntryForTargetAddress
     | RouteTableForDestinationHasNoEntryForSourceAddress
+    | NodeCannotReachTheInternet
+    | NodeCannotBeReachedFromTheInternet
 
 
 isPossible : Connectivity -> Bool
@@ -140,7 +142,7 @@ checkOutbound { fromNode, toNode } =
             Possible
 
         else
-            NotPossible []
+            NotPossible [ NodeCannotReachTheInternet ]
 
     else
         Possible
@@ -153,7 +155,7 @@ checkInbound { fromNode, toNode } =
             Possible
 
         else
-            NotPossible []
+            NotPossible [ NodeCannotBeReachedFromTheInternet ]
 
     else
         Possible
