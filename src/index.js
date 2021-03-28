@@ -4,7 +4,8 @@ import {
     DescribeVpcsCommand,
     DescribeSubnetsCommand,
     DescribeSecurityGroupsCommand,
-    DescribeInstancesCommand
+    DescribeInstancesCommand,
+    DescribeRouteTablesCommand
 } from "@aws-sdk/client-ec2";
 
 
@@ -24,14 +25,16 @@ ports.fetchAwsData.subscribe(creds => {
                 client.send(new DescribeSubnetsCommand({})),
                 client.send(new DescribeSecurityGroupsCommand({})),
                 client.send(new DescribeInstancesCommand({})),
+                client.send(new DescribeRouteTablesCommand({})),
             ])
             .then(responses => {
-                const [vpcs, subnets, securityGroups, instances] = responses
+                const [vpcs, subnets, securityGroups, instances, routeTables] = responses
                 const awsData = {
                     vpcsResponse : vpcs.Vpcs,
                     subnetsResponse : subnets.Subnets,
                     securityGroupsResponse : securityGroups.SecurityGroups,
-                    instancesResponse : instances.Reservations
+                    instancesResponse : instances.Reservations,
+                    routeTablesResponse : routeTables.RouteTables
                 }
                 console.log(awsData)
                 ports.awsDataReceived.send(awsData)

@@ -7,11 +7,13 @@ module Vpc.SecurityGroup exposing
     , allowsEgress
     , allowsIngress
     , build
+    , decoder
     , idAsString
     )
 
 import Cidr exposing (Cidr)
 import IpAddress exposing (Ipv4Address)
+import Json.Decode as Json
 import Port exposing (Port)
 import Protocol exposing (Protocol)
 
@@ -96,3 +98,57 @@ build id ingress egress =
         , ingress = List.map Rule ingress
         , egress = List.map Rule egress
         }
+
+
+
+-- Decoder
+
+
+decoder : Json.Decoder SecurityGroup
+decoder =
+    Json.map3 build
+        (Json.field "GroupId" Json.string)
+        (Json.field "IpPermissions" rulesDecoder)
+        (Json.field "IpPermissionsEgress" rulesDecoder)
+
+
+rulesDecoder : Json.Decoder (List Rule_)
+rulesDecoder =
+    Json.list
+        (Json.map4 Rule_
+            protocolDecoder
+            fromPortDecoder
+            toPortDecoder
+            cidrsDecoder
+        )
+
+
+protocolDecoder : Json.Decoder Protocol
+protocolDecoder =
+    Json.field "IpProtocol" Protocol.decoder
+
+
+fromPortDecoder : Json.Decoder Int
+fromPortDecoder =
+    Json.oneOf
+        [ Json.field "FromPort" Port.decoder
+        , Json.succeed Port.first -- when FromPort is missing, that means all ports (at least as far as we've seen)
+        ]
+
+
+toPortDecoder : Json.Decoder Int
+toPortDecoder =
+    Json.oneOf
+        [ Json.field "ToPort" Port.decoder
+        , Json.succeed Port.last -- when ToPort is missing, that means all ports (at least as far as we've seen)
+        ]
+
+
+cidrsDecoder : Json.Decoder (List Cidr)
+cidrsDecoder =
+    Json.field "IpRanges" (Json.list cidrDecoder)
+
+
+cidrDecoder : Json.Decoder Cidr
+cidrDecoder =
+    Json.field "CidrIp" Cidr.decoder

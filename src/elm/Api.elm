@@ -1,14 +1,12 @@
 module Api exposing (decodeAwsData)
 
-import Cidr exposing (Cidr)
+import Api.RouteTablesResponse as RouteTablesResponse exposing (RouteTablesResponse)
 import Dict exposing (Dict)
 import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
 import Node exposing (Node)
-import Port
-import Protocol exposing (Protocol)
 import Vpc exposing (Vpc)
-import Vpc.RouteTable as RouteTable
+import Vpc.RouteTable as RouteTable exposing (RouteTable)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
@@ -20,11 +18,12 @@ decodeAwsData =
 
 awsDataDecoder : Json.Decoder AwsData
 awsDataDecoder =
-    Json.map4 AwsData
+    Json.map5 AwsData
         (Json.field "vpcsResponse" vpcsDecoder)
         (Json.field "subnetsResponse" subnetsDecoder)
         (Json.field "securityGroupsResponse" securityGroupsDecoder)
         (Json.field "instancesResponse" instancesDecoder)
+        (Json.field "routeTablesResponse" RouteTablesResponse.decoder)
 
 
 vpcsDecoder : Json.Decoder VpcsResponse
@@ -51,57 +50,7 @@ subnetDecoder =
 
 securityGroupsDecoder : Json.Decoder (List SecurityGroup)
 securityGroupsDecoder =
-    Json.list securityGroupDecoder
-
-
-securityGroupDecoder : Json.Decoder SecurityGroup
-securityGroupDecoder =
-    Json.map3 SecurityGroup.build
-        (Json.field "GroupId" Json.string)
-        (Json.field "IpPermissions" rulesDecoder)
-        (Json.field "IpPermissionsEgress" rulesDecoder)
-
-
-rulesDecoder : Json.Decoder (List SecurityGroup.Rule_)
-rulesDecoder =
-    Json.list
-        (Json.map4 SecurityGroup.Rule_
-            protocolDecoder
-            fromPortDecoder
-            toPortDecoder
-            cidrsDecoder
-        )
-
-
-protocolDecoder : Json.Decoder Protocol
-protocolDecoder =
-    Json.field "IpProtocol" Protocol.decoder
-
-
-fromPortDecoder : Json.Decoder Int
-fromPortDecoder =
-    Json.oneOf
-        [ Json.field "FromPort" Port.decoder
-        , Json.succeed Port.first -- when FromPort is missing, that means all ports (at least as far as we've seen)
-        ]
-
-
-toPortDecoder : Json.Decoder Int
-toPortDecoder =
-    Json.oneOf
-        [ Json.field "ToPort" Port.decoder
-        , Json.succeed Port.last -- when ToPort is missing, that means all ports (at least as far as we've seen)
-        ]
-
-
-cidrsDecoder : Json.Decoder (List Cidr)
-cidrsDecoder =
-    Json.field "IpRanges" (Json.list cidrDecoder)
-
-
-cidrDecoder : Json.Decoder Cidr
-cidrDecoder =
-    Json.field "CidrIp" Cidr.decoder
+    Json.list SecurityGroup.decoder
 
 
 instancesDecoder : Json.Decoder (List InstanceResponse)
@@ -112,11 +61,12 @@ instancesDecoder =
 
 instanceDecoder : Json.Decoder InstanceResponse
 instanceDecoder =
-    Json.map4 InstanceResponse
+    Json.map5 InstanceResponse
         (Json.field "InstanceId" Json.string)
         (Json.field "SubnetId" Json.string)
         (Json.field "PrivateIpAddress" IpAddress.v4Decoder)
         (Json.field "SecurityGroups" (Json.list (Json.field "GroupId" Json.string)))
+        (Json.field "VpcId" Json.string)
 
 
 type alias AwsData =
@@ -124,6 +74,7 @@ type alias AwsData =
     , subnets : SubnetsResponse
     , securityGroups : List SecurityGroup
     , instances : InstancesResponse
+    , routeTables : RouteTablesResponse
     }
 
 
@@ -144,6 +95,7 @@ type alias InstanceResponse =
     , subnetId : String
     , privateIp : Ipv4Address
     , securityGroups : List String
+    , vpcId : VpcId
     }
 
 
@@ -157,6 +109,35 @@ type alias SubnetResponse =
     }
 
 
+findRouteTable : VpcId -> SubnetId -> RouteTablesResponse -> RouteTable
+findRouteTable vpcId subnetId tablesResponse =
+    findExplicitAssociation subnetId tablesResponse
+        |> Maybe.withDefault
+            (findImplicitAssociation vpcId tablesResponse
+                -- TODO: rather than default to something wrong, change  buildVpcs to support failure with a Result type
+                |> Maybe.withDefault (RouteTable.build [])
+            )
+
+
+findExplicitAssociation : SubnetId -> RouteTablesResponse -> Maybe RouteTable
+findExplicitAssociation subnetId { explicit } =
+    List.filter (appliesTo subnetId) explicit
+        |> List.head
+        |> Maybe.map Tuple.second
+
+
+appliesTo : SubnetId -> ( List SubnetId, b ) -> Bool
+appliesTo subnetId ( subnets, _ ) =
+    List.member subnetId subnets
+
+
+findImplicitAssociation : VpcId -> RouteTablesResponse -> Maybe RouteTable
+findImplicitAssociation vpcId { implicit } =
+    List.filter (Tuple.first >> (==) vpcId) implicit
+        |> List.head
+        |> Maybe.map Tuple.second
+
+
 type alias SubnetId =
     String
 
@@ -166,8 +147,8 @@ type alias VpcId =
 
 
 buildVpcs : AwsData -> List Vpc
-buildVpcs { vpcs, subnets, securityGroups, instances } =
-    buildNodes instances securityGroups
+buildVpcs { vpcs, subnets, securityGroups, instances, routeTables } =
+    buildNodes instances securityGroups routeTables
         |> buildSubnets subnets
         |> buildVpcs_ vpcs
 
@@ -182,25 +163,25 @@ collectVpc subnetsByVpc vpc vpcs =
     Vpc.build vpc.id (Dict.get vpc.id subnetsByVpc |> Maybe.withDefault []) :: vpcs
 
 
-buildNodes : InstancesResponse -> List SecurityGroup -> Dict SubnetId (List Node)
-buildNodes instances securityGroups =
-    collectInstances securityGroups instances
+buildNodes : InstancesResponse -> List SecurityGroup -> RouteTablesResponse -> Dict SubnetId (List Node)
+buildNodes instances securityGroups routeTables =
+    collectInstances securityGroups instances routeTables
 
 
-collectInstances : List SecurityGroup -> List InstanceResponse -> Dict SubnetId (List Node)
-collectInstances securityGroups instances =
-    List.foldl (collectInstance securityGroups) Dict.empty instances
+collectInstances : List SecurityGroup -> List InstanceResponse -> RouteTablesResponse -> Dict SubnetId (List Node)
+collectInstances securityGroups instances routeTables =
+    List.foldl (collectInstance securityGroups routeTables) Dict.empty instances
 
 
-collectInstance : List SecurityGroup -> InstanceResponse -> Dict SubnetId (List Node) -> Dict SubnetId (List Node)
-collectInstance securityGroups instance nodesBySubnet =
+collectInstance : List SecurityGroup -> RouteTablesResponse -> InstanceResponse -> Dict SubnetId (List Node) -> Dict SubnetId (List Node)
+collectInstance securityGroups routeTables instance nodesBySubnet =
     let
         instance_ =
             Node.buildEc2
                 { id = instance.id
                 , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) instance.securityGroups) securityGroups
                 , privateIp = instance.privateIp
-                , routeTable = RouteTable.build [] -- TODO use the actual one rather than stub
+                , routeTable = findRouteTable instance.vpcId instance.subnetId routeTables
                 }
 
         addInstance nodes =
@@ -237,3 +218,4 @@ collectSubnet nodesBySubnet subnetResponse subnetsByVpc =
 
 -- TODO: write a Dict.updateList and Dict.getOrEmptyList utility
 -- TODO: this instance decoder currently fails when you have a terminated instance, as it will not have a subnetId when terminated
+-- TODO: when associating nodes to a vpc and route tables to nodes, we should key the Dict using <vpc-subnet> to avoid issues when the same subnetId is used across different VPCs

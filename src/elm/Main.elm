@@ -9,7 +9,6 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events exposing (onClick)
 import Element.Input as Input
-import IpAddress
 import Json.Decode as Json
 import Node exposing (Node)
 import Port exposing (Port)
@@ -20,11 +19,6 @@ import Vpc.Subnet as Subnet exposing (Subnet)
 
 main : Program () Model Msg
 main =
-    let
-        _ =
-            IpAddress.v4FromString "1.2.3.4"
-                |> Debug.log "hi"
-    in
     Browser.document
         { init = init
         , view = view
@@ -221,7 +215,7 @@ theWorld : Model -> Element Msg
 theWorld model =
     case model of
         Loading _ ->
-            Element.text "Loading..."
+            column [] [ Element.text "Loading...", refreshButton ]
 
         WaitingForCredentials creds ->
             column [ width fill, spacing 30, padding 20 ]
