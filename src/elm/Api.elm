@@ -13,7 +13,7 @@ import Vpc.Subnet as Subnet exposing (Subnet)
 
 decodeAwsData : Json.Value -> Result Json.Error (List Vpc)
 decodeAwsData =
-    Json.decodeValue awsDataDecoder >> Debug.log "" >> Result.map buildVpcs
+    Json.decodeValue awsDataDecoder >> Result.map buildVpcs
 
 
 awsDataDecoder : Json.Decoder AwsData
