@@ -23,7 +23,8 @@ type Connectivity
 type ConnectionIssue
     = MissingEgressRule
     | MissingIngressRule
-    | RouteTableHasNoEntryForTargetAddress
+    | RouteTableForSourceHasNoEntryForTargetAddress
+    | RouteTableForDestinationHasNoEntryForSourceAddress
 
 
 isPossible : Connectivity -> Bool
@@ -62,7 +63,7 @@ type alias ConnectivityContext =
 check : ConnectivityContext -> Connectivity
 check context =
     checkSecurityGroups context
-        |> combineWith (checkRouteTable context)
+        |> combineWith (checkRouteTables context)
         |> combineWith (checkInternet context)
 
 
@@ -98,22 +99,57 @@ checkIngressRules { fromNode, toNode, forProtocol, overPort } =
 -- Route tables
 
 
-checkRouteTable : ConnectivityContext -> Connectivity
-checkRouteTable { fromNode, toNode } =
+checkRouteTables : ConnectivityContext -> Connectivity
+checkRouteTables { fromNode, toNode } =
+    checkSourceTable fromNode toNode
+        |> combineWith (checkDestinationTable fromNode toNode)
+
+
+checkSourceTable : Node -> Node -> Connectivity
+checkSourceTable fromNode toNode =
+    if Node.hasRouteTo fromNode toNode then
+        Possible
+
+    else
+        NotPossible [ RouteTableForSourceHasNoEntryForTargetAddress ]
+
+
+checkDestinationTable : Node -> Node -> Connectivity
+checkDestinationTable fromNode toNode =
     if Node.hasRouteTo toNode fromNode then
         Possible
 
     else
-        NotPossible [ RouteTableHasNoEntryForTargetAddress ]
+        NotPossible [ RouteTableForSourceHasNoEntryForTargetAddress ]
 
 
 
 -- Internet
 
 
-checkInternet { fromNode, toNode } =
+checkInternet : ConnectivityContext -> Connectivity
+checkInternet context =
+    checkOutbound context
+        |> combineWith (checkInbound context)
+
+
+checkOutbound : ConnectivityContext -> Connectivity
+checkOutbound { fromNode, toNode } =
     if Node.isInternet toNode then
         if Node.canAccessInternet fromNode then
+            Possible
+
+        else
+            NotPossible []
+
+    else
+        Possible
+
+
+checkInbound : ConnectivityContext -> Connectivity
+checkInbound { fromNode, toNode } =
+    if Node.isInternet fromNode then
+        if Node.canAccessInternet toNode then
             Possible
 
         else

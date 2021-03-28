@@ -146,6 +146,7 @@ hasRouteTo toNode fromNode =
             RouteTable.hasRouteTo (ipv4Address toNode) vpcNode.routeTable
 
 
+canAccessInternet : Node -> Bool
 canAccessInternet node =
     case node of
         Internet ->
@@ -155,6 +156,7 @@ canAccessInternet node =
             vpcNodeCanAccessInternet specificNode
 
 
+vpcNodeCanAccessInternet : VpcNode -> Bool
 vpcNodeCanAccessInternet node =
     case node of
         Ec2 ec2 ->

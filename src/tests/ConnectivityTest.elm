@@ -4,7 +4,7 @@ import Connectivity exposing (Connectivity, ConnectivityContext)
 import Expect
 import Fixtures.Ec2 as Ec2
 import Fixtures.RouteTable as RouteTable
-import Fixtures.SecurityGroup exposing (allowAllInOut, allowNothing)
+import Fixtures.SecurityGroup as SecurityGroup
 import Node exposing (Node)
 import Port exposing (Port)
 import Protocol
@@ -20,7 +20,7 @@ suite =
                     tcpConnectivitySuccess
                         { from =
                             Ec2.build
-                                |> Ec2.withGroup allowAllInOut
+                                |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withPublicIp
                                 |> Ec2.toNode
@@ -31,7 +31,7 @@ suite =
                     tcpConnectivityFailure
                         { from =
                             Ec2.build
-                                |> Ec2.withGroup allowNothing
+                                |> Ec2.withGroup SecurityGroup.allowNothing
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withPublicIp
                                 |> Ec2.toNode
@@ -42,7 +42,7 @@ suite =
                     tcpConnectivityFailure
                         { from =
                             Ec2.build
-                                |> Ec2.withGroup allowAllInOut
+                                |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.localTable
                                 |> Ec2.withPublicIp
                                 |> Ec2.toNode
@@ -53,7 +53,7 @@ suite =
                     tcpConnectivityFailure
                         { from =
                             Ec2.build
-                                |> Ec2.withGroup allowAllInOut
+                                |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withNoPublicIp
                                 |> Ec2.toNode
@@ -67,8 +67,9 @@ suite =
                         { from = internet
                         , to =
                             Ec2.build
-                                |> Ec2.withGroup allowAllInOut
+                                |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withPublicIp
                                 |> Ec2.toNode
                         }
             , test "internet cannot reach ec2 with empty security group" <|
@@ -77,7 +78,31 @@ suite =
                         { from = internet
                         , to =
                             Ec2.build
-                                |> Ec2.withGroup allowNothing
+                                |> Ec2.withGroup SecurityGroup.allowNothing
+                                |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withPublicIp
+                                |> Ec2.toNode
+                        }
+            , test "internet cannot reach ec2 with local route table" <|
+                \_ ->
+                    tcpConnectivityFailure
+                        { from = internet
+                        , to =
+                            Ec2.build
+                                |> Ec2.withGroup SecurityGroup.allowAllInOut
+                                |> Ec2.withTable RouteTable.localTable
+                                |> Ec2.withPublicIp
+                                |> Ec2.toNode
+                        }
+            , test "internet cannot reach ec2 without a public ip" <|
+                \_ ->
+                    tcpConnectivityFailure
+                        { from = internet
+                        , to =
+                            Ec2.build
+                                |> Ec2.withGroup SecurityGroup.allowAllInOut
+                                |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNoPublicIp
                                 |> Ec2.toNode
                         }
             ]
