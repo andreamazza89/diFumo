@@ -54,18 +54,6 @@
                     "GatewayId": "local",
                     "Origin": "CreateRouteTable",
                     "State": "active"
-                },
-                {
-                    "DestinationCidrBlock": "0.0.0.0/0",
-                    "NatGatewayId": "nat-0bd293ef912fb8bfb",
-                    "Origin": "CreateRoute",
-                    "State": "active"
-                },
-                {
-                    "DestinationPrefixListId": "pl-6da54004",
-                    "GatewayId": "vpce-058d988a9f24d2a53",
-                    "Origin": "CreateRoute",
-                    "State": "active"
                 }
             ],
             "Tags": [

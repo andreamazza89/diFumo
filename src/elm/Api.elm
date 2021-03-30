@@ -78,10 +78,6 @@ publicIpDecoder =
         ]
 
 
-
---- GOTTA CHECK OUT THE PUBLIC IP ADDRESS SITUATION
-
-
 type alias AwsData =
     { vpcs : VpcsResponse
     , subnets : SubnetsResponse

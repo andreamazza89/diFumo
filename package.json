@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "parcel src/index.html",
+    "stubbed": "NODE_ENV=stubbed parcel src/index.html",
     "test": "cd src && elm-test"
   },
   "author": "",
