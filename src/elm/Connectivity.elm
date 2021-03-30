@@ -81,20 +81,16 @@ checkSecurityGroups context =
 
 checkEgressRules : ConnectivityContext -> Connectivity
 checkEgressRules { fromNode, toNode, forProtocol, overPort } =
-    if Node.allowsEgress fromNode toNode forProtocol overPort then
-        Possible
-
-    else
-        NotPossible [ MissingEgressRule ]
+    check_
+        (Node.allowsEgress fromNode toNode forProtocol overPort)
+        MissingEgressRule
 
 
 checkIngressRules : ConnectivityContext -> Connectivity
 checkIngressRules { fromNode, toNode, forProtocol, overPort } =
-    if Node.allowsIngress fromNode toNode forProtocol overPort then
-        Possible
-
-    else
-        NotPossible [ MissingIngressRule ]
+    check_
+        (Node.allowsIngress fromNode toNode forProtocol overPort)
+        MissingIngressRule
 
 
 
@@ -109,20 +105,16 @@ checkRouteTables { fromNode, toNode } =
 
 checkSourceTable : Node -> Node -> Connectivity
 checkSourceTable fromNode toNode =
-    if Node.hasRouteTo fromNode toNode then
-        Possible
-
-    else
-        NotPossible [ RouteTableForSourceHasNoEntryForTargetAddress ]
+    check_
+        (Node.hasRouteTo fromNode toNode)
+        RouteTableForSourceHasNoEntryForTargetAddress
 
 
 checkDestinationTable : Node -> Node -> Connectivity
 checkDestinationTable fromNode toNode =
-    if Node.hasRouteTo toNode fromNode then
-        Possible
-
-    else
-        NotPossible [ RouteTableForSourceHasNoEntryForTargetAddress ]
+    check_
+        (Node.hasRouteTo toNode fromNode)
+        RouteTableForSourceHasNoEntryForTargetAddress
 
 
 
@@ -138,11 +130,9 @@ checkInternet context =
 checkOutbound : ConnectivityContext -> Connectivity
 checkOutbound { fromNode, toNode } =
     if Node.isInternet toNode then
-        if Node.canAccessInternet fromNode then
-            Possible
-
-        else
-            NotPossible [ NodeCannotReachTheInternet ]
+        check_
+            (Node.canAccessInternet fromNode)
+            NodeCannotReachTheInternet
 
     else
         Possible
@@ -151,11 +141,22 @@ checkOutbound { fromNode, toNode } =
 checkInbound : ConnectivityContext -> Connectivity
 checkInbound { fromNode, toNode } =
     if Node.isInternet fromNode then
-        if Node.canAccessInternet toNode then
-            Possible
-
-        else
-            NotPossible [ NodeCannotBeReachedFromTheInternet ]
+        check_
+            (Node.canAccessInternet toNode)
+            NodeCannotBeReachedFromTheInternet
 
     else
         Possible
+
+
+
+-- Helpers
+
+
+check_ : Bool -> ConnectionIssue -> Connectivity
+check_ possible issue =
+    if possible then
+        Possible
+
+    else
+        NotPossible [ issue ]
