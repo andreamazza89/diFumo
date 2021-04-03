@@ -138,9 +138,9 @@ outboundTrafficIsNotAllowed address rules =
 checkInbound : { ingressRules : List Rule, egressRules : List Rule } -> Bool -> Ipv4Address -> Expectation
 checkInbound rules expect address_ =
     NetworkACL.build rules
-        |> NetworkACL.allowsInboundFor
-            { address = address_
-            , protocol = Protocol.tcp
+        |> NetworkACL.allowsIngress
+            { ip = address_
+            , forProtocol = Protocol.tcp
             , overPort = 80
             }
         |> toExpect expect
@@ -149,9 +149,9 @@ checkInbound rules expect address_ =
 checkOutbound : { ingressRules : List Rule, egressRules : List Rule } -> Bool -> Ipv4Address -> Expectation
 checkOutbound rules expect address_ =
     NetworkACL.build rules
-        |> NetworkACL.allowsOutboundFor
-            { address = address_
-            , protocol = Protocol.tcp
+        |> NetworkACL.allowsEgress
+            { ip = address_
+            , forProtocol = Protocol.tcp
             , overPort = 80
             }
         |> toExpect expect

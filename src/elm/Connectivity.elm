@@ -27,6 +27,8 @@ type ConnectionIssue
     | RouteTableForDestinationHasNoEntryForSourceAddress
     | NodeCannotReachTheInternet
     | NodeCannotBeReachedFromTheInternet
+    | NetworkACLIngressRules
+    | NetworkACLEgressRules
 
 
 isPossible : Connectivity -> Bool
@@ -66,6 +68,7 @@ check : ConnectivityContext -> Connectivity
 check context =
     checkSecurityGroups context
         |> combineWith (checkRouteTables context)
+        |> combineWith (checkNetworkACL context)
         |> combineWith (checkInternet context)
 
 
@@ -115,6 +118,30 @@ checkDestinationTable fromNode toNode =
     check_
         (Node.hasRouteTo toNode fromNode)
         RouteTableForSourceHasNoEntryForTargetAddress
+
+
+
+-- Network ACL
+
+
+checkNetworkACL : ConnectivityContext -> Connectivity
+checkNetworkACL context =
+    checkACLIngress context
+        |> combineWith (checkACLEgress context)
+
+
+checkACLIngress : ConnectivityContext -> Connectivity
+checkACLIngress { fromNode, toNode, forProtocol, overPort } =
+    check_
+        (Node.aclAllowsIngress fromNode toNode forProtocol overPort)
+        NetworkACLIngressRules
+
+
+checkACLEgress : ConnectivityContext -> Connectivity
+checkACLEgress { fromNode, toNode, forProtocol, overPort } =
+    check_
+        (Node.aclAllowsEgress fromNode toNode forProtocol overPort)
+        NetworkACLEgressRules
 
 
 

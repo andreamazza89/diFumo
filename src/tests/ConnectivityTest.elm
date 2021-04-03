@@ -3,6 +3,7 @@ module ConnectivityTest exposing (suite)
 import Connectivity exposing (Connectivity, ConnectivityContext)
 import Expect
 import Fixtures.Ec2 as Ec2
+import Fixtures.NetworkACL as NetworkACL
 import Fixtures.RouteTable as RouteTable
 import Fixtures.SecurityGroup as SecurityGroup
 import Node exposing (Node)
@@ -22,6 +23,7 @@ suite =
                             Ec2.build
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNetworkACL NetworkACL.allowAll
                                 |> Ec2.withPublicIp
                                 |> Ec2.toNode
                         , to = internet
@@ -33,6 +35,7 @@ suite =
                             Ec2.build
                                 |> Ec2.withGroup SecurityGroup.allowNothing
                                 |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNetworkACL NetworkACL.allowAll
                                 |> Ec2.withPublicIp
                                 |> Ec2.toNode
                         , to = internet
@@ -55,7 +58,20 @@ suite =
                             Ec2.build
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNetworkACL NetworkACL.allowAll
                                 |> Ec2.withNoPublicIp
+                                |> Ec2.toNode
+                        , to = internet
+                        }
+            , test "ec2 cannot reach internet with blocking networkACL" <|
+                \_ ->
+                    tcpConnectivityFailure
+                        { from =
+                            Ec2.build
+                                |> Ec2.withGroup SecurityGroup.allowAllInOut
+                                |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNetworkACL NetworkACL.blockAll
+                                |> Ec2.withPublicIp
                                 |> Ec2.toNode
                         , to = internet
                         }
@@ -69,6 +85,7 @@ suite =
                             Ec2.build
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNetworkACL NetworkACL.allowAll
                                 |> Ec2.withPublicIp
                                 |> Ec2.toNode
                         }
@@ -80,6 +97,7 @@ suite =
                             Ec2.build
                                 |> Ec2.withGroup SecurityGroup.allowNothing
                                 |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNetworkACL NetworkACL.allowAll
                                 |> Ec2.withPublicIp
                                 |> Ec2.toNode
                         }
@@ -91,6 +109,7 @@ suite =
                             Ec2.build
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.localTable
+                                |> Ec2.withNetworkACL NetworkACL.allowAll
                                 |> Ec2.withPublicIp
                                 |> Ec2.toNode
                         }
@@ -102,7 +121,20 @@ suite =
                             Ec2.build
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNetworkACL NetworkACL.allowAll
                                 |> Ec2.withNoPublicIp
+                                |> Ec2.toNode
+                        }
+            , test "internet cannot reach ec2 with blocking networkACL" <|
+                \_ ->
+                    tcpConnectivityFailure
+                        { from = internet
+                        , to =
+                            Ec2.build
+                                |> Ec2.withGroup SecurityGroup.allowAllInOut
+                                |> Ec2.withTable RouteTable.internetTable
+                                |> Ec2.withNetworkACL NetworkACL.blockAll
+                                |> Ec2.withPublicIp
                                 |> Ec2.toNode
                         }
             ]

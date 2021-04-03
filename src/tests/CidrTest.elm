@@ -2,7 +2,7 @@ module CidrTest exposing (suite)
 
 import Cidr exposing (Cidr)
 import Expect
-import Fixtures.Cidr exposing (cidr, everyWhere)
+import Fixtures.Cidr exposing (cidr, everywhere)
 import Fixtures.IpAddress as IpAddress
 import IpAddress
 import Test exposing (Test, describe, test)
@@ -41,7 +41,7 @@ suite =
                     |> doesNotContain [ 9, 255, 255, 255 ]
         , test "The 'everywhere' cidr matches any address" <|
             \_ ->
-                everyWhere
+                everywhere
                     |> contains [ 1, 2, 3, 4 ]
         ]
 

@@ -1,11 +1,11 @@
-module Fixtures.Cidr exposing (cidr, everyWhere)
+module Fixtures.Cidr exposing (cidr, everywhere)
 
 import Cidr exposing (Cidr)
 import Fixtures.IpAddress as IpAddress
 
 
-everyWhere : Maybe Cidr
-everyWhere =
+everywhere : Maybe Cidr
+everywhere =
     Just Cidr.everywhere
 
 

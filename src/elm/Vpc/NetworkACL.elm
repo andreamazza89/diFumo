@@ -1,8 +1,9 @@
 module Vpc.NetworkACL exposing
     ( Action(..)
+    , NetworkACL
     , Rule
-    , allowsInboundFor
-    , allowsOutboundFor
+    , allowsEgress
+    , allowsIngress
     , build
     )
 
@@ -39,8 +40,8 @@ type Action
 
 
 type alias Target =
-    { address : Ipv4Address
-    , protocol : Protocol
+    { ip : Ipv4Address
+    , forProtocol : Protocol
     , overPort : Port
     }
 
@@ -58,13 +59,13 @@ build =
 -- Query
 
 
-allowsInboundFor : Target -> NetworkACL -> Bool
-allowsInboundFor target =
+allowsIngress : Target -> NetworkACL -> Bool
+allowsIngress target =
     ingressRules >> checkRules target
 
 
-allowsOutboundFor : Target -> NetworkACL -> Bool
-allowsOutboundFor target =
+allowsEgress : Target -> NetworkACL -> Bool
+allowsEgress target =
     egressRules >> checkRules target
 
 
@@ -95,8 +96,8 @@ findFirstRuleMatching target =
 
 appliesTo : Target -> Rule -> Bool
 appliesTo target rule =
-    Cidr.contains target.address rule.cidr
-        && Protocol.matches target.protocol rule.protocol
+    Cidr.contains target.ip rule.cidr
+        && Protocol.matches target.forProtocol rule.protocol
         && Port.isWithin { fromPort = rule.fromPort, toPort = rule.toPort } target.overPort
 
 

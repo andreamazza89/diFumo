@@ -2,15 +2,18 @@ module Fixtures.Ec2 exposing
     ( build
     , toNode
     , withGroup
+    , withNetworkACL
     , withNoPublicIp
     , withPublicIp
     , withTable
     )
 
+import Fixtures.NetworkACL as NetworkACL
 import Fixtures.RouteTable as RouteTable
 import IpAddress
 import Node exposing (Node)
 import Node.Ec2 as Ec2
+import Vpc.NetworkACL exposing (NetworkACL)
 import Vpc.RouteTable exposing (RouteTable)
 import Vpc.SecurityGroup exposing (SecurityGroup)
 
@@ -26,6 +29,7 @@ build =
     , privateIp = IpAddress.madeUpV4
     , routeTable = RouteTable.localTable
     , publicIp = Nothing
+    , networkACL = NetworkACL.allowAll
     }
 
 
@@ -37,6 +41,11 @@ withGroup group builder =
 withTable : RouteTable -> Ec2.Config Node.Config -> Ec2.Config Node.Config
 withTable table builder =
     { builder | routeTable = table }
+
+
+withNetworkACL : NetworkACL -> Ec2.Config Node.Config -> Ec2.Config Node.Config
+withNetworkACL acl builder =
+    { builder | networkACL = acl }
 
 
 withNoPublicIp : Ec2.Config Node.Config -> Ec2.Config Node.Config

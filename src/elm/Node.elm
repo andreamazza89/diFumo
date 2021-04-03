@@ -1,6 +1,8 @@
 module Node exposing
     ( Config
     , Node
+    , aclAllowsEgress
+    , aclAllowsIngress
     , allowsEgress
     , allowsIngress
     , buildEc2
@@ -16,6 +18,7 @@ import IpAddress exposing (Ipv4Address)
 import Node.Ec2 as Ec2 exposing (Ec2)
 import Port exposing (Port)
 import Protocol exposing (Protocol)
+import Vpc.NetworkACL as NetworkACL exposing (NetworkACL)
 import Vpc.RouteTable as RouteTable exposing (RouteTable)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 
@@ -42,6 +45,7 @@ type alias Node_ =
     { ipv4Address : Ipv4Address
     , securityGroups : List SecurityGroup
     , routeTable : RouteTable
+    , networkACL : NetworkACL
     }
 
 
@@ -146,6 +150,40 @@ hasRouteTo toNode fromNode =
             RouteTable.hasRouteTo (ipv4Address toNode) vpcNode.routeTable
 
 
+aclAllowsIngress : Node -> Node -> Protocol -> Port -> Bool
+aclAllowsIngress fromNode toNode forProtocol overPort =
+    case toNode of
+        Internet ->
+            True
+
+        Vpc { networkACL } _ ->
+            let
+                target =
+                    { ip = ipv4Address fromNode
+                    , forProtocol = forProtocol
+                    , overPort = overPort
+                    }
+            in
+            NetworkACL.allowsIngress target networkACL
+
+
+aclAllowsEgress : Node -> Node -> Protocol -> Port -> Bool
+aclAllowsEgress fromNode toNode forProtocol overPort =
+    case fromNode of
+        Internet ->
+            True
+
+        Vpc { networkACL } _ ->
+            let
+                target =
+                    { ip = ipv4Address toNode
+                    , forProtocol = forProtocol
+                    , overPort = overPort
+                    }
+            in
+            NetworkACL.allowsEgress target networkACL
+
+
 canAccessInternet : Node -> Bool
 canAccessInternet node =
     case node of
@@ -171,6 +209,7 @@ type alias Config =
     { privateIp : Ipv4Address
     , securityGroups : List SecurityGroup
     , routeTable : RouteTable
+    , networkACL : NetworkACL
     }
 
 
@@ -180,6 +219,7 @@ buildEc2 config =
         { ipv4Address = config.privateIp
         , securityGroups = config.securityGroups
         , routeTable = config.routeTable
+        , networkACL = config.networkACL
         }
         (Ec2 (Ec2.build config))
 
