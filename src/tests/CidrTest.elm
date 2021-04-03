@@ -2,6 +2,8 @@ module CidrTest exposing (suite)
 
 import Cidr exposing (Cidr)
 import Expect
+import Fixtures.Cidr exposing (cidr, everyWhere)
+import Fixtures.IpAddress as IpAddress
 import IpAddress
 import Test exposing (Test, describe, test)
 
@@ -39,35 +41,14 @@ suite =
                     |> doesNotContain [ 9, 255, 255, 255 ]
         , test "The 'everywhere' cidr matches any address" <|
             \_ ->
-                everywhereCidr
+                everyWhere
                     |> contains [ 1, 2, 3, 4 ]
         ]
 
 
-everywhereCidr : Maybe Cidr
-everywhereCidr =
-    Just Cidr.everywhere
-
-
-cidr : List Int -> Cidr.SubnetMask -> Maybe Cidr
-cidr address mask =
-    addressFromList address
-        |> Maybe.andThen (Cidr.build mask)
-
-
-addressFromList : List Int -> Maybe IpAddress.Ipv4Address
-addressFromList address =
-    case address of
-        [ a, b, c, d ] ->
-            IpAddress.buildV4 a b c d
-
-        _ ->
-            Nothing
-
-
 doesNotContain : List Int -> Maybe Cidr -> Expect.Expectation
 doesNotContain address cidr_ =
-    Maybe.map2 doesNotContain_ cidr_ (addressFromList address)
+    Maybe.map2 doesNotContain_ cidr_ (IpAddress.fromList address)
         |> Maybe.withDefault (Expect.fail "Could not build ip address or cidr")
 
 
@@ -78,7 +59,7 @@ doesNotContain_ cidr_ address =
 
 contains : List Int -> Maybe Cidr -> Expect.Expectation
 contains address cidr_ =
-    Maybe.map2 contains_ cidr_ (addressFromList address)
+    Maybe.map2 contains_ cidr_ (IpAddress.fromList address)
         |> Maybe.withDefault (Expect.fail "Could not build ip address or cidr")
 
 

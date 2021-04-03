@@ -5,6 +5,7 @@ module IpAddress exposing
     , madeUpV4
     , plus
     , v4Decoder
+    , v4FromInt
     , v4FromString
     )
 
@@ -21,7 +22,16 @@ type Ipv4Address
 
 
 
--- Build
+-- Build v4 address
+
+
+v4FromInt : Int -> Maybe Ipv4Address
+v4FromInt int =
+    if 0 <= int && int <= 4294967295 then
+        Just (Ipv4Address int)
+
+    else
+        Nothing
 
 
 v4FromString : String -> Maybe Ipv4Address
