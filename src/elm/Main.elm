@@ -348,6 +348,12 @@ viewIssue issue =
         Connectivity.NodeCannotBeReachedFromTheInternet ->
             text "NodeCannotBeReachedFromTheInternet"
 
+        Connectivity.NetworkACLIngressRules ->
+            text "NetworkACLIngressRules"
+
+        Connectivity.NetworkACLEgressRules ->
+            text "NetworkACLEgressRules"
+
 
 internetNode : Loaded_ -> Element Msg
 internetNode model =
