@@ -1,7 +1,7 @@
 module Api.RouteTablesResponse exposing
     ( RouteTablesResponse
     , decoder
-    , findRouteTable
+    , find
     )
 
 import Json.Decode as Json
@@ -113,8 +113,8 @@ vpcIdDecoder =
     Json.field "VpcId" Json.string
 
 
-findRouteTable : VpcId -> SubnetId -> RouteTablesResponse -> RouteTable
-findRouteTable vpcId subnetId tablesResponse =
+find : VpcId -> SubnetId -> RouteTablesResponse -> RouteTable
+find vpcId subnetId tablesResponse =
     findExplicitAssociation subnetId tablesResponse
         |> Maybe.withDefault
             (findImplicitAssociation vpcId tablesResponse

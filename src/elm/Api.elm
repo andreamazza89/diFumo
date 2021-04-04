@@ -7,7 +7,6 @@ import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
 import Node exposing (Node)
 import Vpc exposing (Vpc)
-import Vpc.NetworkACL as NetworkACL
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
@@ -135,8 +134,8 @@ type alias VpcId =
 
 
 buildVpcs : AwsData -> List Vpc
-buildVpcs { vpcs, subnets, securityGroups, instances, routeTables } =
-    buildNodes instances securityGroups routeTables
+buildVpcs ({ vpcs, subnets, securityGroups, instances, routeTables } as awsData) =
+    buildNodes awsData
         |> buildSubnets subnets
         |> buildVpcs_ vpcs
 
@@ -151,27 +150,27 @@ collectVpc subnetsByVpc vpc vpcs =
     Vpc.build vpc.id (Dict.get vpc.id subnetsByVpc |> Maybe.withDefault []) :: vpcs
 
 
-buildNodes : InstancesResponse -> List SecurityGroup -> RouteTablesResponse -> Dict SubnetId (List Node)
-buildNodes instances securityGroups routeTables =
-    collectInstances securityGroups instances routeTables
+buildNodes : AwsData -> Dict SubnetId (List Node)
+buildNodes awsData =
+    collectInstances awsData
 
 
-collectInstances : List SecurityGroup -> List InstanceResponse -> RouteTablesResponse -> Dict SubnetId (List Node)
-collectInstances securityGroups instances routeTables =
-    List.foldl (collectInstance securityGroups routeTables) Dict.empty instances
+collectInstances : AwsData -> Dict SubnetId (List Node)
+collectInstances ({ instances } as awsData) =
+    List.foldl (collectInstance awsData) Dict.empty instances
 
 
-collectInstance : List SecurityGroup -> RouteTablesResponse -> InstanceResponse -> Dict SubnetId (List Node) -> Dict SubnetId (List Node)
-collectInstance securityGroups routeTables instance nodesBySubnet =
+collectInstance : AwsData -> InstanceResponse -> Dict SubnetId (List Node) -> Dict SubnetId (List Node)
+collectInstance { securityGroups, routeTables, networkACLs } instance nodesBySubnet =
     let
         instance_ =
             Node.buildEc2
                 { id = instance.id
                 , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) instance.securityGroups) securityGroups
                 , privateIp = instance.privateIp
-                , routeTable = RouteTablesResponse.findRouteTable instance.vpcId instance.subnetId routeTables
+                , routeTable = RouteTablesResponse.find instance.vpcId instance.subnetId routeTables
                 , publicIp = instance.publicIp
-                , networkACL = NetworkACL.build { ingressRules = [], egressRules = [] }
+                , networkACL = NetworkACLsResponse.find instance.subnetId networkACLs
                 }
 
         addInstance nodes =

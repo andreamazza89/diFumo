@@ -1,4 +1,4 @@
-module Api.NetworkACLsResponse exposing (NetworkACLsResponse, decoder)
+module Api.NetworkACLsResponse exposing (NetworkACLsResponse, decoder, find)
 
 import Cidr exposing (Cidr)
 import Json.Decode as Json
@@ -34,6 +34,28 @@ type alias RuleResponse =
 
 type alias SubnetId =
     String
+
+
+
+-- Query
+
+
+find : SubnetId -> List NetworkACLResponse -> NetworkACL
+find subnetId =
+    List.filter (includesSubnet subnetId)
+        >> List.head
+        >> Maybe.map .acl
+        -- TODO: rather than default to something wrong, change  buildVpcs to support failure with a Result type
+        >> Maybe.withDefault (NetworkACL.build { ingressRules = [], egressRules = [] })
+
+
+includesSubnet : SubnetId -> NetworkACLResponse -> Bool
+includesSubnet subnetId =
+    .subnetsAssociated >> List.member subnetId
+
+
+
+-- Decoder
 
 
 decoder : Json.Decoder NetworkACLsResponse
