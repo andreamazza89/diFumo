@@ -1,10 +1,15 @@
 module Api.RouteTablesResponse exposing
     ( RouteTablesResponse
     , decoder
+    , findRouteTable
     )
 
 import Json.Decode as Json
 import Vpc.RouteTable as RouteTable exposing (RouteTable)
+
+
+
+-- Route Tables Response
 
 
 type alias RouteTablesResponse =
@@ -106,3 +111,32 @@ subnetAssociationDecoder =
 vpcIdDecoder : Json.Decoder VpcId
 vpcIdDecoder =
     Json.field "VpcId" Json.string
+
+
+findRouteTable : VpcId -> SubnetId -> RouteTablesResponse -> RouteTable
+findRouteTable vpcId subnetId tablesResponse =
+    findExplicitAssociation subnetId tablesResponse
+        |> Maybe.withDefault
+            (findImplicitAssociation vpcId tablesResponse
+                -- TODO: rather than default to something wrong, change  buildVpcs to support failure with a Result type
+                |> Maybe.withDefault (RouteTable.build [])
+            )
+
+
+findExplicitAssociation : SubnetId -> RouteTablesResponse -> Maybe RouteTable
+findExplicitAssociation subnetId { explicit } =
+    List.filter (appliesTo subnetId) explicit
+        |> List.head
+        |> Maybe.map Tuple.second
+
+
+appliesTo : SubnetId -> ( List SubnetId, b ) -> Bool
+appliesTo subnetId ( subnets, _ ) =
+    List.member subnetId subnets
+
+
+findImplicitAssociation : VpcId -> RouteTablesResponse -> Maybe RouteTable
+findImplicitAssociation vpcId { implicit } =
+    List.filter (Tuple.first >> (==) vpcId) implicit
+        |> List.head
+        |> Maybe.map Tuple.second

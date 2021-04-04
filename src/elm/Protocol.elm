@@ -62,6 +62,10 @@ decoder =
                     "tcp" ->
                         Json.succeed tcp
 
+                    "6" ->
+                        -- some services use the protocol code instead of its name, so tcp can either be "tcp" or "6"
+                        Json.succeed tcp
+
                     "-1" ->
                         Json.succeed all
 

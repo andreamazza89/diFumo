@@ -107,35 +107,35 @@ allowAddressOne =
     allowAll >> (\rule -> { rule | cidr = addressOneCidr })
 
 
-inboundTrafficIsAllowed : Maybe Ipv4Address -> { ingressRules : List Rule, egressRules : List Rule } -> Expectation
+inboundTrafficIsAllowed : Maybe Ipv4Address -> NetworkACL.Rules -> Expectation
 inboundTrafficIsAllowed address rules =
     address
         |> Maybe.map (checkInbound rules True)
         |> Maybe.withDefault (Expect.fail "missing ip address")
 
 
-inboundTrafficIsNotAllowed : Maybe Ipv4Address -> { ingressRules : List Rule, egressRules : List Rule } -> Expectation
+inboundTrafficIsNotAllowed : Maybe Ipv4Address -> NetworkACL.Rules -> Expectation
 inboundTrafficIsNotAllowed address rules =
     address
         |> Maybe.map (checkInbound rules False)
         |> Maybe.withDefault (Expect.fail "missing ip address")
 
 
-outboundTrafficIsAllowed : Maybe Ipv4Address -> { ingressRules : List Rule, egressRules : List Rule } -> Expectation
+outboundTrafficIsAllowed : Maybe Ipv4Address -> NetworkACL.Rules -> Expectation
 outboundTrafficIsAllowed address rules =
     address
         |> Maybe.map (checkOutbound rules True)
         |> Maybe.withDefault (Expect.fail "missing ip address")
 
 
-outboundTrafficIsNotAllowed : Maybe Ipv4Address -> { ingressRules : List Rule, egressRules : List Rule } -> Expectation
+outboundTrafficIsNotAllowed : Maybe Ipv4Address -> NetworkACL.Rules -> Expectation
 outboundTrafficIsNotAllowed address rules =
     address
         |> Maybe.map (checkOutbound rules False)
         |> Maybe.withDefault (Expect.fail "missing ip address")
 
 
-checkInbound : { ingressRules : List Rule, egressRules : List Rule } -> Bool -> Ipv4Address -> Expectation
+checkInbound : NetworkACL.Rules -> Bool -> Ipv4Address -> Expectation
 checkInbound rules expect address_ =
     NetworkACL.build rules
         |> NetworkACL.allowsIngress
@@ -146,7 +146,7 @@ checkInbound rules expect address_ =
         |> toExpect expect
 
 
-checkOutbound : { ingressRules : List Rule, egressRules : List Rule } -> Bool -> Ipv4Address -> Expectation
+checkOutbound : NetworkACL.Rules -> Bool -> Ipv4Address -> Expectation
 checkOutbound rules expect address_ =
     NetworkACL.build rules
         |> NetworkACL.allowsEgress

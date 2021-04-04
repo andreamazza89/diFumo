@@ -1,12 +1,13 @@
 module Api exposing (decodeAwsData)
 
+import Api.NetworkACLsResponse as NetworkACLsResponse exposing (NetworkACLsResponse)
 import Api.RouteTablesResponse as RouteTablesResponse exposing (RouteTablesResponse)
 import Dict exposing (Dict)
 import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
 import Node exposing (Node)
 import Vpc exposing (Vpc)
-import Vpc.RouteTable as RouteTable exposing (RouteTable)
+import Vpc.NetworkACL as NetworkACL
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
@@ -18,12 +19,13 @@ decodeAwsData =
 
 awsDataDecoder : Json.Decoder AwsData
 awsDataDecoder =
-    Json.map5 AwsData
+    Json.map6 AwsData
         (Json.field "vpcsResponse" vpcsDecoder)
         (Json.field "subnetsResponse" subnetsDecoder)
         (Json.field "securityGroupsResponse" securityGroupsDecoder)
         (Json.field "instancesResponse" instancesDecoder)
         (Json.field "routeTablesResponse" RouteTablesResponse.decoder)
+        (Json.field "networkACLsResponse" NetworkACLsResponse.decoder)
 
 
 vpcsDecoder : Json.Decoder VpcsResponse
@@ -84,6 +86,7 @@ type alias AwsData =
     , securityGroups : List SecurityGroup
     , instances : InstancesResponse
     , routeTables : RouteTablesResponse
+    , networkACLs : NetworkACLsResponse
     }
 
 
@@ -119,41 +122,16 @@ type alias SubnetResponse =
     }
 
 
-findRouteTable : VpcId -> SubnetId -> RouteTablesResponse -> RouteTable
-findRouteTable vpcId subnetId tablesResponse =
-    findExplicitAssociation subnetId tablesResponse
-        |> Maybe.withDefault
-            (findImplicitAssociation vpcId tablesResponse
-                -- TODO: rather than default to something wrong, change  buildVpcs to support failure with a Result type
-                |> Maybe.withDefault (RouteTable.build [])
-            )
-
-
-findExplicitAssociation : SubnetId -> RouteTablesResponse -> Maybe RouteTable
-findExplicitAssociation subnetId { explicit } =
-    List.filter (appliesTo subnetId) explicit
-        |> List.head
-        |> Maybe.map Tuple.second
-
-
-appliesTo : SubnetId -> ( List SubnetId, b ) -> Bool
-appliesTo subnetId ( subnets, _ ) =
-    List.member subnetId subnets
-
-
-findImplicitAssociation : VpcId -> RouteTablesResponse -> Maybe RouteTable
-findImplicitAssociation vpcId { implicit } =
-    List.filter (Tuple.first >> (==) vpcId) implicit
-        |> List.head
-        |> Maybe.map Tuple.second
-
-
 type alias SubnetId =
     String
 
 
 type alias VpcId =
     String
+
+
+
+-- Zipping up the api responses
 
 
 buildVpcs : AwsData -> List Vpc
@@ -191,8 +169,9 @@ collectInstance securityGroups routeTables instance nodesBySubnet =
                 { id = instance.id
                 , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) instance.securityGroups) securityGroups
                 , privateIp = instance.privateIp
-                , routeTable = findRouteTable instance.vpcId instance.subnetId routeTables
+                , routeTable = RouteTablesResponse.findRouteTable instance.vpcId instance.subnetId routeTables
                 , publicIp = instance.publicIp
+                , networkACL = NetworkACL.build { ingressRules = [], egressRules = [] }
                 }
 
         addInstance nodes =
@@ -229,4 +208,4 @@ collectSubnet nodesBySubnet subnetResponse subnetsByVpc =
 
 -- TODO: write a Dict.updateList and Dict.getOrEmptyList utility
 -- TODO: this instance decoder currently fails when you have a terminated instance, as it will not have a subnetId when terminated
--- TODO: when associating nodes to a vpc and route tables to nodes, we should key the Dict using <vpc-subnet> to avoid issues when the same subnetId is used across different VPCs
+-- TODO: when associating nodes to a vpc and route tables/networkACLs to nodes, we should key the Dict using <vpc-subnet> to avoid issues when the same subnetId is used across different VPCs. I think this is unlikely in the real world, but it's better to completely avoid it.
