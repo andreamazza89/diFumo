@@ -206,5 +206,5 @@ collectSubnet nodesBySubnet subnetResponse subnetsByVpc =
 
 
 -- TODO: write a Dict.updateList and Dict.getOrEmptyList utility
--- TODO: this instance decoder currently fails when you have a terminated instance, as it will not have a subnetId when terminated
+-- TODO: the instance decoder currently fails when you have a terminated instance, as it will not have a subnetId when terminated - we should just filter those out instead
 -- TODO: when associating nodes to a vpc and route tables/networkACLs to nodes, we should key the Dict using <vpc-subnet> to avoid issues when the same subnetId is used across different VPCs. I think this is unlikely in the real world, but it's better to completely avoid it.

@@ -1,0 +1,109 @@
+{
+    "DBInstances": [
+        {
+            "DBInstanceIdentifier": "mrdp-oprah-database-development",
+            "DBInstanceClass": "db.t2.small",
+            "Engine": "postgres",
+            "DBInstanceStatus": "available",
+            "MasterUsername": "mrdp_oprah_database_user_development",
+            "DBName": "mrdp_oprah_database_development",
+            "Endpoint": {
+                "Address": "mrdp-oprah-database-development.cyzzuca98v5c.eu-west-1.rds.amazonaws.com",
+                "Port": 5432,
+                "HostedZoneId": "Z29XKXDKYMONMX"
+            },
+            "AllocatedStorage": 5,
+            "InstanceCreateTime": "2020-10-29T13:31:58.478000+00:00",
+            "PreferredBackupWindow": "04:14-04:44",
+            "BackupRetentionPeriod": 1,
+            "DBSecurityGroups": [],
+            "VpcSecurityGroups": [
+                {
+                    "VpcSecurityGroupId": "sg-0e6877f983f64501c",
+                    "Status": "active"
+                }
+            ],
+            "DBParameterGroups": [
+                {
+                    "DBParameterGroupName": "mrdp-oprah-database-development",
+                    "ParameterApplyStatus": "in-sync"
+                }
+            ],
+            "AvailabilityZone": "eu-west-1a",
+            "DBSubnetGroup": {
+                "DBSubnetGroupName": "terraform-20200129154735359700000002",
+                "DBSubnetGroupDescription": "Managed by Terraform",
+                "VpcId": "vpc-02a34f69639e5d566",
+                "SubnetGroupStatus": "Complete",
+                "Subnets": [
+                    {
+                        "SubnetIdentifier": "subnet-0c8587ae21dd2f18a",
+                        "SubnetAvailabilityZone": {
+                            "Name": "eu-west-1b"
+                        },
+                        "SubnetOutpost": {},
+                        "SubnetStatus": "Active"
+                    },
+                    {
+                        "SubnetIdentifier": "subnet-06b385372a02a26f9",
+                        "SubnetAvailabilityZone": {
+                            "Name": "eu-west-1a"
+                        },
+                        "SubnetOutpost": {},
+                        "SubnetStatus": "Active"
+                    }
+                ]
+            },
+            "PreferredMaintenanceWindow": "sat:02:23-sat:02:53",
+            "PendingModifiedValues": {},
+            "LatestRestorableTime": "2021-04-04T18:27:43+00:00",
+            "MultiAZ": false,
+            "EngineVersion": "12.5",
+            "AutoMinorVersionUpgrade": true,
+            "ReadReplicaDBInstanceIdentifiers": [],
+            "LicenseModel": "postgresql-license",
+            "OptionGroupMemberships": [
+                {
+                    "OptionGroupName": "default:postgres-12",
+                    "Status": "in-sync"
+                }
+            ],
+            "PubliclyAccessible": false,
+            "StorageType": "gp2",
+            "DbInstancePort": 0,
+            "StorageEncrypted": true,
+            "KmsKeyId": "arn:aws:kms:eu-west-1:062881346168:key/ae7a01f2-370e-4648-a172-a3a8a185fec7",
+            "DbiResourceId": "db-QTTPPPV7QYSGRFDMF6UCXGFAIM",
+            "CACertificateIdentifier": "rds-ca-2019",
+            "DomainMemberships": [],
+            "CopyTagsToSnapshot": false,
+            "MonitoringInterval": 1,
+            "EnhancedMonitoringResourceArn": "arn:aws:logs:eu-west-1:062881346168:log-group:RDSOSMetrics:log-stream:db-QTTPPPV7QYSGRFDMF6UCXGFAIM",
+            "MonitoringRoleArn": "arn:aws:iam::062881346168:role/mrdp-oprah-database-development-enhanced-monitoring",
+            "DBInstanceArn": "arn:aws:rds:eu-west-1:062881346168:db:mrdp-oprah-database-development",
+            "IAMDatabaseAuthenticationEnabled": false,
+            "PerformanceInsightsEnabled": false,
+            "EnabledCloudwatchLogsExports": [
+                "postgresql",
+                "upgrade"
+            ],
+            "DeletionProtection": true,
+            "AssociatedRoles": [],
+            "TagList": [
+                {
+                    "Key": "env",
+                    "Value": "development"
+                },
+                {
+                    "Key": "family",
+                    "Value": "oprah"
+                },
+                {
+                    "Key": "Name",
+                    "Value": "Oprah relational database"
+                }
+            ],
+            "CustomerOwnedIpEnabled": false
+        }
+    ]
+}
