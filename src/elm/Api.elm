@@ -1,6 +1,8 @@
 module Api exposing (decodeAwsData)
 
 import Api.NetworkACLsResponse as NetworkACLsResponse exposing (NetworkACLsResponse)
+import Api.NetworkInterfacesResponse as NetworkInterfacesResponse exposing (NetworkInterfacesResponse)
+import Api.RdsResponse as RdsResponse exposing (RdsResponse, RdsesResponse)
 import Api.RouteTablesResponse as RouteTablesResponse exposing (RouteTablesResponse)
 import Dict exposing (Dict)
 import IpAddress exposing (Ipv4Address)
@@ -18,13 +20,15 @@ decodeAwsData =
 
 awsDataDecoder : Json.Decoder AwsData
 awsDataDecoder =
-    Json.map6 AwsData
+    Json.map8 AwsData
         (Json.field "vpcsResponse" vpcsDecoder)
         (Json.field "subnetsResponse" subnetsDecoder)
         (Json.field "securityGroupsResponse" securityGroupsDecoder)
         (Json.field "instancesResponse" instancesDecoder)
         (Json.field "routeTablesResponse" RouteTablesResponse.decoder)
         (Json.field "networkACLsResponse" NetworkACLsResponse.decoder)
+        (Json.field "networkInterfacesResponse" NetworkInterfacesResponse.decoder)
+        (Json.field "dbInstancesResponse" RdsResponse.decoder)
 
 
 vpcsDecoder : Json.Decoder VpcsResponse
@@ -86,6 +90,8 @@ type alias AwsData =
     , instances : InstancesResponse
     , routeTables : RouteTablesResponse
     , networkACLs : NetworkACLsResponse
+    , networkInterfaces : NetworkInterfacesResponse
+    , databases : RdsesResponse
     }
 
 
@@ -153,6 +159,7 @@ collectVpc subnetsByVpc vpc vpcs =
 buildNodes : AwsData -> Dict SubnetId (List Node)
 buildNodes awsData =
     collectInstances awsData
+        |> collectDatabases awsData
 
 
 collectInstances : AwsData -> Dict SubnetId (List Node)
@@ -179,6 +186,43 @@ collectInstance { securityGroups, routeTables, networkACLs } instance nodesBySub
                 |> Maybe.withDefault (Just [ instance_ ])
     in
     Dict.update instance.subnetId addInstance nodesBySubnet
+
+
+collectDatabases : AwsData -> Dict SubnetId (List Node) -> Dict SubnetId (List Node)
+collectDatabases awsData otherNodes =
+    List.foldl (collectDatabase awsData) otherNodes awsData.databases
+
+
+collectDatabase : AwsData -> RdsResponse -> Dict String (List Node) -> Dict String (List Node)
+collectDatabase { securityGroups, routeTables, networkACLs, networkInterfaces } database nodesBySubnet =
+    let
+        networkInfo =
+            ------------ Time has come to switch to a Result when zipping rather than defaulting to something wrong like below
+            NetworkInterfacesResponse.findRdsInfo database networkInterfaces
+                |> Maybe.withDefault
+                    { securityGroups = []
+                    , vpcId = "asdf"
+                    , ip = IpAddress.madeUpV4
+                    , subnetId = "FIX THIS"
+                    , instanceOwnerId = "hi"
+                    }
+
+        instance_ =
+            Node.buildRds
+                { id = database.id
+                , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) database.securityGroups) securityGroups
+                , privateIp = networkInfo.ip
+                , routeTable = RouteTablesResponse.find database.vpcId networkInfo.subnetId routeTables
+                , publicIp = database.publicIp
+                , networkACL = NetworkACLsResponse.find networkInfo.subnetId networkACLs
+                }
+
+        addInstance nodes =
+            nodes
+                |> Maybe.map ((::) instance_ >> Just)
+                |> Maybe.withDefault (Just [ instance_ ])
+    in
+    Dict.update networkInfo.subnetId addInstance nodesBySubnet
 
 
 buildSubnets : SubnetsResponse -> Dict SubnetId (List Node) -> Dict VpcId (List Subnet)

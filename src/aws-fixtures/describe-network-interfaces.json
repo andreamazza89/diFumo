@@ -1,7 +1,7 @@
 {
     "NetworkInterfaces": [
         {
-            "Attachment": {
+           "Attachment": {
                 "AttachmentId": "ela-attach-68caf057",
                 "DeleteOnTermination": false,
                 "DeviceIndex": 1,

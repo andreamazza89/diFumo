@@ -20,7 +20,7 @@ suite =
                 \_ ->
                     tcpConnectivitySuccess
                         { from =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withNetworkACL NetworkACL.allowAll
@@ -32,7 +32,7 @@ suite =
                 \_ ->
                     tcpConnectivityFailure
                         { from =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowNothing
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withNetworkACL NetworkACL.allowAll
@@ -44,7 +44,7 @@ suite =
                 \_ ->
                     tcpConnectivityFailure
                         { from =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.localTable
                                 |> Ec2.withPublicIp
@@ -55,7 +55,7 @@ suite =
                 \_ ->
                     tcpConnectivityFailure
                         { from =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withNetworkACL NetworkACL.allowAll
@@ -67,7 +67,7 @@ suite =
                 \_ ->
                     tcpConnectivityFailure
                         { from =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withNetworkACL NetworkACL.blockAll
@@ -82,7 +82,7 @@ suite =
                     tcpConnectivitySuccess
                         { from = internet
                         , to =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withNetworkACL NetworkACL.allowAll
@@ -94,7 +94,7 @@ suite =
                     tcpConnectivityFailure
                         { from = internet
                         , to =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowNothing
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withNetworkACL NetworkACL.allowAll
@@ -106,7 +106,7 @@ suite =
                     tcpConnectivityFailure
                         { from = internet
                         , to =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.localTable
                                 |> Ec2.withNetworkACL NetworkACL.allowAll
@@ -118,7 +118,7 @@ suite =
                     tcpConnectivityFailure
                         { from = internet
                         , to =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withNetworkACL NetworkACL.allowAll
@@ -130,7 +130,7 @@ suite =
                     tcpConnectivityFailure
                         { from = internet
                         , to =
-                            Ec2.build
+                            Ec2.builder
                                 |> Ec2.withGroup SecurityGroup.allowAllInOut
                                 |> Ec2.withTable RouteTable.internetTable
                                 |> Ec2.withNetworkACL NetworkACL.blockAll

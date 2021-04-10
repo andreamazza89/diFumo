@@ -1,5 +1,5 @@
 module Fixtures.Ec2 exposing
-    ( build
+    ( builder
     , toNode
     , withGroup
     , withNetworkACL
@@ -22,8 +22,8 @@ import Vpc.SecurityGroup exposing (SecurityGroup)
 -- Ec2 Fixture
 
 
-build : Ec2.Config Node.Config
-build =
+builder : Ec2.Config Node.Config
+builder =
     { id = "some-id"
     , securityGroups = []
     , privateIp = IpAddress.madeUpV4

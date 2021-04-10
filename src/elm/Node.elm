@@ -6,6 +6,7 @@ module Node exposing
     , allowsEgress
     , allowsIngress
     , buildEc2
+    , buildRds
     , canAccessInternet
     , equals
     , hasRouteTo
@@ -16,6 +17,7 @@ module Node exposing
 
 import IpAddress exposing (Ipv4Address)
 import Node.Ec2 as Ec2 exposing (Ec2)
+import Node.Rds as Rds exposing (Rds)
 import Port exposing (Port)
 import Protocol exposing (Protocol)
 import Vpc.NetworkACL as NetworkACL exposing (NetworkACL)
@@ -39,6 +41,7 @@ type Node
 
 type VpcNode
     = Ec2 Ec2
+    | Rds Rds
 
 
 type alias Node_ =
@@ -82,6 +85,12 @@ vpcNodeEquals node otherNode =
         ( Ec2 ec2, Ec2 otherEc2 ) ->
             Ec2.equals ec2 otherEc2
 
+        ( Rds rds, Rds otherRds ) ->
+            Rds.equals rds otherRds
+
+        ( _, _ ) ->
+            False
+
 
 ipv4Address : Node -> Ipv4Address
 ipv4Address node =
@@ -102,6 +111,9 @@ idAsString node_ =
 
         Vpc _ (Ec2 ec2) ->
             Ec2.idAsString ec2
+
+        Vpc _ (Rds rds) ->
+            Rds.idAsString rds
 
 
 allowsEgress : Node -> Node -> Protocol -> Port -> Bool
@@ -200,28 +212,40 @@ vpcNodeCanAccessInternet node =
         Ec2 ec2 ->
             Ec2.canAccessInternet ec2
 
+        Rds rds ->
+            Rds.canAccessInternet rds
+
 
 
 -- Builders
 
 
-type alias Config =
-    { privateIp : Ipv4Address
-    , securityGroups : List SecurityGroup
-    , routeTable : RouteTable
-    , networkACL : NetworkACL
+type alias Config a =
+    { a
+        | privateIp : Ipv4Address
+        , securityGroups : List SecurityGroup
+        , routeTable : RouteTable
+        , networkACL : NetworkACL
     }
 
 
-buildEc2 : Ec2.Config Config -> Node
+buildEc2 : Config (Ec2.Config a) -> Node
 buildEc2 config =
-    Vpc
-        { ipv4Address = config.privateIp
-        , securityGroups = config.securityGroups
-        , routeTable = config.routeTable
-        , networkACL = config.networkACL
-        }
-        (Ec2 (Ec2.build config))
+    Vpc (buildVpcNode config) (Ec2 (Ec2.build config))
+
+
+buildRds : Config (Rds.Config a) -> Node
+buildRds config =
+    Vpc (buildVpcNode config) (Rds (Rds.build config))
+
+
+buildVpcNode : Config a -> Node_
+buildVpcNode config =
+    { ipv4Address = config.privateIp
+    , securityGroups = config.securityGroups
+    , routeTable = config.routeTable
+    , networkACL = config.networkACL
+    }
 
 
 internet : Node
