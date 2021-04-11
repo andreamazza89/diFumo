@@ -13,9 +13,11 @@ import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
 
-decodeAwsData : Json.Value -> Result Json.Error (List Vpc)
+decodeAwsData : Json.Value -> Result String (List Vpc)
 decodeAwsData =
-    Json.decodeValue awsDataDecoder >> Result.map buildVpcs
+    Json.decodeValue awsDataDecoder
+        >> Result.mapError Json.errorToString
+        >> Result.andThen buildVpcs
 
 
 awsDataDecoder : Json.Decoder AwsData
@@ -139,11 +141,11 @@ type alias VpcId =
 -- Zipping up the api responses
 
 
-buildVpcs : AwsData -> List Vpc
+buildVpcs : AwsData -> Result String (List Vpc)
 buildVpcs ({ vpcs, subnets, securityGroups, instances, routeTables } as awsData) =
     buildNodes awsData
-        |> buildSubnets subnets
-        |> buildVpcs_ vpcs
+        |> Result.map (buildSubnets subnets)
+        |> Result.map (buildVpcs_ vpcs)
 
 
 buildVpcs_ : List VpcResponse -> Dict VpcId (List Subnet) -> List Vpc
@@ -156,44 +158,57 @@ collectVpc subnetsByVpc vpc vpcs =
     Vpc.build vpc.id (Dict.get vpc.id subnetsByVpc |> Maybe.withDefault []) :: vpcs
 
 
-buildNodes : AwsData -> Dict SubnetId (List Node)
+buildNodes : AwsData -> Result String (Dict SubnetId (List Node))
 buildNodes awsData =
     collectInstances awsData
         |> collectDatabases awsData
 
 
-collectInstances : AwsData -> Dict SubnetId (List Node)
+collectInstances : AwsData -> Result String (Dict SubnetId (List Node))
 collectInstances ({ instances } as awsData) =
-    List.foldl (collectInstance awsData) Dict.empty instances
+    List.foldl (collectInstance awsData) (Result.Ok Dict.empty) instances
 
 
-collectInstance : AwsData -> InstanceResponse -> Dict SubnetId (List Node) -> Dict SubnetId (List Node)
+collectInstance : AwsData -> InstanceResponse -> Result String (Dict String (List Node)) -> Result String (Dict String (List Node))
 collectInstance { securityGroups, routeTables, networkACLs } instance nodesBySubnet =
     let
+        routeTable =
+            RouteTablesResponse.find instance.vpcId instance.subnetId routeTables
+                |> Result.fromMaybe ("Could not find route table for ec2 " ++ instance.id)
+
         instance_ =
-            Node.buildEc2
-                { id = instance.id
-                , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) instance.securityGroups) securityGroups
-                , privateIp = instance.privateIp
-                , routeTable = RouteTablesResponse.find instance.vpcId instance.subnetId routeTables
-                , publicIp = instance.publicIp
-                , networkACL = NetworkACLsResponse.find instance.subnetId networkACLs
-                }
+            routeTable
+                |> Result.map
+                    (\rt ->
+                        Node.buildEc2
+                            { id = instance.id
+                            , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) instance.securityGroups) securityGroups
+                            , privateIp = instance.privateIp
+                            , routeTable = rt
+                            , publicIp = instance.publicIp
+                            , networkACL = NetworkACLsResponse.find instance.subnetId networkACLs
+                            }
+                    )
 
-        addInstance nodes =
+        addInstance inst nodes =
             nodes
-                |> Maybe.map ((::) instance_ >> Just)
-                |> Maybe.withDefault (Just [ instance_ ])
+                |> Maybe.map ((::) inst >> Just)
+                |> Maybe.withDefault (Just [ inst ])
     in
-    Dict.update instance.subnetId addInstance nodesBySubnet
+    Result.map2
+        (\inst nodes ->
+            Dict.update instance.subnetId (addInstance inst) nodes
+        )
+        instance_
+        nodesBySubnet
 
 
-collectDatabases : AwsData -> Dict SubnetId (List Node) -> Dict SubnetId (List Node)
+collectDatabases : AwsData -> Result String (Dict String (List Node)) -> Result String (Dict String (List Node))
 collectDatabases awsData otherNodes =
     List.foldl (collectDatabase awsData) otherNodes awsData.databases
 
 
-collectDatabase : AwsData -> RdsResponse -> Dict String (List Node) -> Dict String (List Node)
+collectDatabase : AwsData -> RdsResponse -> Result String (Dict String (List Node)) -> Result String (Dict String (List Node))
 collectDatabase { securityGroups, routeTables, networkACLs, networkInterfaces } database nodesBySubnet =
     let
         networkInfo =
@@ -207,22 +222,37 @@ collectDatabase { securityGroups, routeTables, networkACLs, networkInterfaces } 
                     , instanceOwnerId = "hi"
                     }
 
-        instance_ =
-            Node.buildRds
-                { id = database.id
-                , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) database.securityGroups) securityGroups
-                , privateIp = networkInfo.ip
-                , routeTable = RouteTablesResponse.find database.vpcId networkInfo.subnetId routeTables
-                , isPubliclyAccessible = database.isPubliclyAccessible
-                , networkACL = NetworkACLsResponse.find networkInfo.subnetId networkACLs
-                }
+        routeTable =
+            RouteTablesResponse.find database.vpcId networkInfo.subnetId routeTables
+                |> Result.fromMaybe ("Could not find route table for database " ++ database.id)
 
-        addInstance nodes =
+        instance_ : Result String Node
+        instance_ =
+            routeTable
+                |> Result.map
+                    (\rt ->
+                        Node.buildRds
+                            { id = database.id
+                            , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) database.securityGroups) securityGroups
+                            , privateIp = networkInfo.ip
+                            , routeTable = rt
+                            , isPubliclyAccessible = database.isPubliclyAccessible
+                            , networkACL = NetworkACLsResponse.find networkInfo.subnetId networkACLs
+                            }
+                    )
+
+        addInstance : Node -> Maybe (List Node) -> Maybe (List Node)
+        addInstance node nodes =
             nodes
-                |> Maybe.map ((::) instance_ >> Just)
-                |> Maybe.withDefault (Just [ instance_ ])
+                |> Maybe.map ((::) node >> Just)
+                |> Maybe.withDefault (Just [ node ])
     in
-    Dict.update networkInfo.subnetId addInstance nodesBySubnet
+    Result.map2
+        (\db nodes ->
+            Dict.update networkInfo.subnetId (addInstance db) nodes
+        )
+        instance_
+        nodesBySubnet
 
 
 buildSubnets : SubnetsResponse -> Dict SubnetId (List Node) -> Dict VpcId (List Subnet)

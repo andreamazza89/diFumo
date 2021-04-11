@@ -9,7 +9,6 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events exposing (onClick)
 import Element.Input as Input
-import Json.Decode as Json
 import Node exposing (Node)
 import Port exposing (Port)
 import Protocol
@@ -34,7 +33,9 @@ type Model
 
 
 type alias Loaded_ =
-    { vpcs : List Vpc, pathSelection : PathSelection }
+    { vpcs : List Vpc
+    , pathSelection : PathSelection
+    }
 
 
 type PathSelection
@@ -48,7 +49,7 @@ type Msg
     | PortTyped Port
     | NoOp
     | VpcsLoaded (Result String (List Vpc))
-    | ReceivedVpcs (Result Json.Error (List Vpc))
+    | ReceivedVpcs (Result String (List Vpc))
     | AccessKeyIdTyped String
     | SecretAccessKeyTyped String
     | SubmitCredentialsClicked

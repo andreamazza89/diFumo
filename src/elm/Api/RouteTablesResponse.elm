@@ -5,6 +5,7 @@ module Api.RouteTablesResponse exposing
     )
 
 import Json.Decode as Json
+import Utils.Maybe as Maybe
 import Vpc.RouteTable as RouteTable exposing (RouteTable)
 
 
@@ -113,14 +114,11 @@ vpcIdDecoder =
     Json.field "VpcId" Json.string
 
 
-find : VpcId -> SubnetId -> RouteTablesResponse -> RouteTable
+find : VpcId -> SubnetId -> RouteTablesResponse -> Maybe RouteTable
 find vpcId subnetId tablesResponse =
-    findExplicitAssociation subnetId tablesResponse
-        |> Maybe.withDefault
-            (findImplicitAssociation vpcId tablesResponse
-                -- TODO: rather than default to something wrong, change  buildVpcs to support failure with a Result type
-                |> Maybe.withDefault (RouteTable.build [])
-            )
+    Maybe.oneOf
+        (findExplicitAssociation subnetId tablesResponse)
+        (findImplicitAssociation vpcId tablesResponse)
 
 
 findExplicitAssociation : SubnetId -> RouteTablesResponse -> Maybe RouteTable
