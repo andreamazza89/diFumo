@@ -1,6 +1,5 @@
 module Api.RdsResponse exposing (RdsResponse, RdsesResponse, decoder)
 
-import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
 
 
@@ -11,7 +10,7 @@ type alias RdsesResponse =
 type alias RdsResponse =
     { id : String
     , securityGroups : List String
-    , publicIp : Maybe Ipv4Address
+    , isPubliclyAccessible : Bool
     , subnetIds : List String
     , vpcId : String
     }
@@ -33,7 +32,7 @@ decoder_ =
     Json.map5 RdsResponse
         (Json.field "DBInstanceIdentifier" Json.string)
         (Json.field "VpcSecurityGroups" securityGroupsDecoder)
-        (Json.succeed Nothing)
+        (Json.field "PubliclyAccessible" Json.bool)
         subnetIdsDecoder
         (Json.at [ "DBSubnetGroup", "VpcId" ] Json.string)
 

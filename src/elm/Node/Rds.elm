@@ -9,13 +9,11 @@ module Node.Rds exposing
 
 -- Rds Node specifics
 
-import IpAddress exposing (Ipv4Address)
-
 
 type Rds
     = Rds
         { id : RdsId
-        , publicIp : Maybe Ipv4Address
+        , publiclyAccessible : Bool
         }
 
 
@@ -41,13 +39,8 @@ equals one theOther =
 
 
 canAccessInternet : Rds -> Bool
-canAccessInternet (Rds { publicIp }) =
-    case publicIp of
-        Just _ ->
-            True
-
-        Nothing ->
-            False
+canAccessInternet (Rds { publiclyAccessible }) =
+    publiclyAccessible
 
 
 
@@ -57,7 +50,7 @@ canAccessInternet (Rds { publicIp }) =
 type alias Config a =
     { a
         | id : String
-        , publicIp : Maybe Ipv4Address
+        , isPubliclyAccessible : Bool
     }
 
 
@@ -65,5 +58,5 @@ build : Config a -> Rds
 build config =
     Rds
         { id = RdsId config.id
-        , publicIp = config.publicIp
+        , publiclyAccessible = config.isPubliclyAccessible
         }

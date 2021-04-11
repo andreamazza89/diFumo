@@ -213,7 +213,7 @@ collectDatabase { securityGroups, routeTables, networkACLs, networkInterfaces } 
                 , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) database.securityGroups) securityGroups
                 , privateIp = networkInfo.ip
                 , routeTable = RouteTablesResponse.find database.vpcId networkInfo.subnetId routeTables
-                , publicIp = database.publicIp
+                , isPubliclyAccessible = database.isPubliclyAccessible
                 , networkACL = NetworkACLsResponse.find networkInfo.subnetId networkACLs
                 }
 
