@@ -1,13 +1,14 @@
 module Api exposing (decodeAwsData)
 
+import Api.InstancesResponse as InstancesResponse exposing (InstanceResponse, InstancesResponse)
 import Api.NetworkACLsResponse as NetworkACLsResponse exposing (NetworkACLsResponse)
 import Api.NetworkInterfacesResponse as NetworkInterfacesResponse exposing (NetworkInterfacesResponse)
 import Api.RdsResponse as RdsResponse exposing (RdsResponse, RdsesResponse)
 import Api.RouteTablesResponse as RouteTablesResponse exposing (RouteTablesResponse)
 import Dict exposing (Dict)
-import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
 import Node exposing (Node)
+import Utils.Dict as Dict
 import Vpc exposing (Vpc)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
@@ -26,7 +27,7 @@ awsDataDecoder =
         (Json.field "vpcsResponse" vpcsDecoder)
         (Json.field "subnetsResponse" subnetsDecoder)
         (Json.field "securityGroupsResponse" securityGroupsDecoder)
-        (Json.field "instancesResponse" instancesDecoder)
+        (Json.field "instancesResponse" InstancesResponse.decoder)
         (Json.field "routeTablesResponse" RouteTablesResponse.decoder)
         (Json.field "networkACLsResponse" NetworkACLsResponse.decoder)
         (Json.field "networkInterfacesResponse" NetworkInterfacesResponse.decoder)
@@ -60,31 +61,6 @@ securityGroupsDecoder =
     Json.list SecurityGroup.decoder
 
 
-instancesDecoder : Json.Decoder (List InstanceResponse)
-instancesDecoder =
-    Json.list (Json.field "Instances" (Json.list instanceDecoder))
-        |> Json.map List.concat
-
-
-instanceDecoder : Json.Decoder InstanceResponse
-instanceDecoder =
-    Json.map6 InstanceResponse
-        (Json.field "InstanceId" Json.string)
-        (Json.field "SubnetId" Json.string)
-        (Json.field "PrivateIpAddress" IpAddress.v4Decoder)
-        publicIpDecoder
-        (Json.field "SecurityGroups" (Json.list (Json.field "GroupId" Json.string)))
-        (Json.field "VpcId" Json.string)
-
-
-publicIpDecoder : Json.Decoder (Maybe Ipv4Address)
-publicIpDecoder =
-    Json.oneOf
-        [ Json.field "PublicIpAddress" IpAddress.v4Decoder |> Json.map Just
-        , Json.succeed Nothing
-        ]
-
-
 type alias AwsData =
     { vpcs : VpcsResponse
     , subnets : SubnetsResponse
@@ -103,20 +79,6 @@ type alias VpcsResponse =
 
 type alias VpcResponse =
     { id : VpcId }
-
-
-type alias InstancesResponse =
-    List InstanceResponse
-
-
-type alias InstanceResponse =
-    { id : String
-    , subnetId : String
-    , privateIp : Ipv4Address
-    , publicIp : Maybe Ipv4Address
-    , securityGroups : List String
-    , vpcId : VpcId
-    }
 
 
 type alias SubnetsResponse =
@@ -174,31 +136,23 @@ collectInstance { securityGroups, routeTables, networkACLs } instance nodesBySub
     let
         routeTable =
             RouteTablesResponse.find instance.vpcId instance.subnetId routeTables
-                |> Result.fromMaybe ("Could not find route table for ec2 " ++ instance.id)
 
         instance_ =
-            routeTable
-                |> Result.map
-                    (\rt ->
-                        Node.buildEc2
-                            { id = instance.id
-                            , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) instance.securityGroups) securityGroups
-                            , privateIp = instance.privateIp
-                            , routeTable = rt
-                            , publicIp = instance.publicIp
-                            , networkACL = NetworkACLsResponse.find instance.subnetId networkACLs
-                            }
-                    )
-
-        addInstance inst nodes =
-            nodes
-                |> Maybe.map ((::) inst >> Just)
-                |> Maybe.withDefault (Just [ inst ])
+            Result.map
+                (\rt ->
+                    Node.buildEc2
+                        { id = instance.id
+                        , securityGroups = findSecurityGroups instance.securityGroups securityGroups
+                        , privateIp = instance.privateIp
+                        , routeTable = rt
+                        , publicIp = instance.publicIp
+                        , networkACL = NetworkACLsResponse.find instance.subnetId networkACLs
+                        }
+                )
+                routeTable
     in
     Result.map2
-        (\inst nodes ->
-            Dict.update instance.subnetId (addInstance inst) nodes
-        )
+        (Dict.updateList instance.subnetId)
         instance_
         nodesBySubnet
 
@@ -212,45 +166,31 @@ collectDatabase : AwsData -> RdsResponse -> Result String (Dict String (List Nod
 collectDatabase { securityGroups, routeTables, networkACLs, networkInterfaces } database nodesBySubnet =
     let
         networkInfo =
-            ------------ Time has come to switch to a Result when zipping rather than defaulting to something wrong like below
             NetworkInterfacesResponse.findRdsInfo database networkInterfaces
-                |> Maybe.withDefault
-                    { securityGroups = []
-                    , vpcId = "asdf"
-                    , ip = IpAddress.madeUpV4
-                    , subnetId = "FIX THIS"
-                    , instanceOwnerId = "hi"
-                    }
 
         routeTable =
-            RouteTablesResponse.find database.vpcId networkInfo.subnetId routeTables
-                |> Result.fromMaybe ("Could not find route table for database " ++ database.id)
+            Result.andThen
+                (\info -> RouteTablesResponse.find database.vpcId info.subnetId routeTables)
+                networkInfo
 
-        instance_ : Result String Node
         instance_ =
-            routeTable
-                |> Result.map
-                    (\rt ->
-                        Node.buildRds
-                            { id = database.id
-                            , securityGroups = List.filter (\group -> List.member (SecurityGroup.idAsString group) database.securityGroups) securityGroups
-                            , privateIp = networkInfo.ip
-                            , routeTable = rt
-                            , isPubliclyAccessible = database.isPubliclyAccessible
-                            , networkACL = NetworkACLsResponse.find networkInfo.subnetId networkACLs
-                            }
-                    )
-
-        addInstance : Node -> Maybe (List Node) -> Maybe (List Node)
-        addInstance node nodes =
-            nodes
-                |> Maybe.map ((::) node >> Just)
-                |> Maybe.withDefault (Just [ node ])
+            Result.map2
+                (\rt ni ->
+                    Node.buildRds
+                        { id = database.id
+                        , securityGroups = findSecurityGroups database.securityGroups securityGroups
+                        , privateIp = ni.ip
+                        , routeTable = rt
+                        , isPubliclyAccessible = database.isPubliclyAccessible
+                        , networkACL = NetworkACLsResponse.find ni.subnetId networkACLs
+                        }
+                )
+                routeTable
+                networkInfo
     in
-    Result.map2
-        (\db nodes ->
-            Dict.update networkInfo.subnetId (addInstance db) nodes
-        )
+    Result.map3
+        (\ni -> Dict.updateList ni.subnetId)
+        networkInfo
         instance_
         nodesBySubnet
 
@@ -269,16 +209,15 @@ collectSubnet nodesBySubnet subnetResponse subnetsByVpc =
 
         subnet =
             Subnet.build subnetResponse.id nodes
-
-        addSubnet subs =
-            subs
-                |> Maybe.map ((::) subnet >> Just)
-                |> Maybe.withDefault (Just [ subnet ])
     in
-    Dict.update subnetResponse.vpcId addSubnet subnetsByVpc
+    Dict.updateList subnetResponse.vpcId subnet subnetsByVpc
+
+
+findSecurityGroups : List String -> List SecurityGroup -> List SecurityGroup
+findSecurityGroups groupIds securityGroups =
+    List.filter (\group -> List.member (SecurityGroup.idAsString group) groupIds) securityGroups
 
 
 
--- TODO: write a Dict.updateList and Dict.getOrEmptyList utility
 -- TODO: the instance decoder currently fails when you have a terminated instance, as it will not have a subnetId when terminated - we should just filter those out instead
 -- TODO: when associating nodes to a vpc and route tables/networkACLs to nodes, we should key the Dict using <vpc-subnet> to avoid issues when the same subnetId is used across different VPCs. I think this is unlikely in the real world, but it's better to completely avoid it.

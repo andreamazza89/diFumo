@@ -46,4 +46,7 @@ idAsString (Vpc { id }) =
 
 build : String -> List Subnet -> Vpc
 build id subnets_ =
-    Vpc { id = Id id, subnets = subnets_ }
+    Vpc
+        { id = Id id
+        , subnets = subnets_
+        }

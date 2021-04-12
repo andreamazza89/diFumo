@@ -114,11 +114,12 @@ vpcIdDecoder =
     Json.field "VpcId" Json.string
 
 
-find : VpcId -> SubnetId -> RouteTablesResponse -> Maybe RouteTable
+find : VpcId -> SubnetId -> RouteTablesResponse -> Result String RouteTable
 find vpcId subnetId tablesResponse =
     Maybe.oneOf
         (findExplicitAssociation subnetId tablesResponse)
         (findImplicitAssociation vpcId tablesResponse)
+        |> Result.fromMaybe "Could not find route table"
 
 
 findExplicitAssociation : SubnetId -> RouteTablesResponse -> Maybe RouteTable

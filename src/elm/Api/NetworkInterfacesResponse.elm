@@ -38,13 +38,14 @@ findRdsInfo :
         , subnetIds : List String
     }
     -> NetworkInterfacesResponse
-    -> Maybe NetworkInterfaceResponse
+    -> Result String NetworkInterfaceResponse
 findRdsInfo { vpcId, subnetIds, securityGroups } =
     List.filter (.vpcId >> (==) vpcId)
         >> List.filter (.subnetId >> (\id -> List.member id subnetIds))
         >> List.filter (.securityGroups >> (==) securityGroups)
         >> List.filter (.instanceOwnerId >> (==) "amazon-rds")
         >> List.head
+        >> Result.fromMaybe "Could not find networkInfo for Rds"
 
 
 decoder : Json.Decoder NetworkInterfacesResponse
