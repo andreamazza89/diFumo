@@ -1,0 +1,33 @@
+{
+    "LoadBalancers": [
+        {
+            "LoadBalancerArn": "arn:aws:elasticloadbalancing:eu-west-1:062881346168:loadbalancer/app/oprah-load-balancer-development/bbeff858fb48c739",
+            "DNSName": "oprah-load-balancer-development-991282784.eu-west-1.elb.amazonaws.com",
+            "CanonicalHostedZoneId": "Z32O12XQLNTSW2",
+            "CreatedTime": "2020-10-29T16:05:21.040000+00:00",
+            "LoadBalancerName": "oprah-load-balancer-development",
+            "Scheme": "internet-facing",
+            "VpcId": "vpc-02a34f69639e5d566",
+            "State": {
+                "Code": "active"
+            },
+            "Type": "application",
+            "AvailabilityZones": [
+                {
+                    "ZoneName": "eu-west-1b",
+                    "SubnetId": "subnet-06b6493e0504e3071",
+                    "LoadBalancerAddresses": []
+                },
+                {
+                    "ZoneName": "eu-west-1a",
+                    "SubnetId": "subnet-0926c582dfc511c89",
+                    "LoadBalancerAddresses": []
+                }
+            ],
+            "SecurityGroups": [
+                "sg-06ddd2ab91bc0de9a"
+            ],
+            "IpAddressType": "ipv4"
+        }
+    ]
+}
