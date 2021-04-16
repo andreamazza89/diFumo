@@ -1,5 +1,6 @@
 module Api exposing (decodeAwsData)
 
+import Api.EcsTasksResponse as EcsTasksResponse exposing (EcsTaskResponse, EcsTasksResponse)
 import Api.InstancesResponse as InstancesResponse exposing (InstanceResponse, InstancesResponse)
 import Api.NetworkACLsResponse as NetworkACLsResponse exposing (NetworkACLsResponse)
 import Api.NetworkInterfacesResponse as NetworkInterfacesResponse exposing (NetworkInterfacesResponse)
@@ -9,6 +10,7 @@ import Dict exposing (Dict)
 import Json.Decode as Json
 import Node exposing (Node)
 import Utils.Dict as Dict
+import Utils.Json as Json
 import Vpc exposing (Vpc)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
@@ -23,15 +25,16 @@ decodeAwsData =
 
 awsDataDecoder : Json.Decoder AwsData
 awsDataDecoder =
-    Json.map8 AwsData
-        (Json.field "vpcsResponse" vpcsDecoder)
-        (Json.field "subnetsResponse" subnetsDecoder)
-        (Json.field "securityGroupsResponse" securityGroupsDecoder)
-        (Json.field "instancesResponse" InstancesResponse.decoder)
-        (Json.field "routeTablesResponse" RouteTablesResponse.decoder)
-        (Json.field "networkACLsResponse" NetworkACLsResponse.decoder)
-        (Json.field "networkInterfacesResponse" NetworkInterfacesResponse.decoder)
-        (Json.field "dbInstancesResponse" RdsResponse.decoder)
+    Json.decode AwsData
+        |> Json.key "vpcsResponse" vpcsDecoder
+        |> Json.key "subnetsResponse" subnetsDecoder
+        |> Json.key "securityGroupsResponse" securityGroupsDecoder
+        |> Json.key "instancesResponse" InstancesResponse.decoder
+        |> Json.key "routeTablesResponse" RouteTablesResponse.decoder
+        |> Json.key "networkACLsResponse" NetworkACLsResponse.decoder
+        |> Json.key "networkInterfacesResponse" NetworkInterfacesResponse.decoder
+        |> Json.key "dbInstancesResponse" RdsResponse.decoder
+        |> Json.key "ecsTasksResponse" EcsTasksResponse.decoder
 
 
 vpcsDecoder : Json.Decoder VpcsResponse
@@ -70,6 +73,7 @@ type alias AwsData =
     , networkACLs : NetworkACLsResponse
     , networkInterfaces : NetworkInterfacesResponse
     , databases : RdsesResponse
+    , ecsTasks : EcsTasksResponse
     }
 
 
@@ -124,6 +128,7 @@ buildNodes : AwsData -> Result String (Dict SubnetId (List Node))
 buildNodes awsData =
     collectInstances awsData
         |> collectDatabases awsData
+        |> collectTasks awsData
 
 
 collectInstances : AwsData -> Result String (Dict SubnetId (List Node))
@@ -192,6 +197,44 @@ collectDatabase { securityGroups, routeTables, networkACLs, networkInterfaces } 
         (\ni -> Dict.updateList ni.subnetId)
         networkInfo
         instance_
+        nodesBySubnet
+
+
+collectTasks : AwsData -> Result String (Dict String (List Node)) -> Result String (Dict String (List Node))
+collectTasks awsData otherNodes =
+    List.foldl (collectTask awsData) otherNodes awsData.ecsTasks
+
+
+collectTask : AwsData -> EcsTaskResponse -> Result String (Dict String (List Node)) -> Result String (Dict String (List Node))
+collectTask { securityGroups, routeTables, networkACLs, networkInterfaces } task nodesBySubnet =
+    let
+        networkInfo =
+            NetworkInterfacesResponse.findForAddress task.ip networkInterfaces
+
+        routeTable =
+            Result.andThen
+                (\info -> RouteTablesResponse.find info.vpcId info.subnetId routeTables)
+                networkInfo
+
+        task_ =
+            Result.map2
+                (\ni rt ->
+                    Node.buildEcsTask
+                        { id = task.arn
+                        , securityGroups = findSecurityGroups ni.securityGroups securityGroups
+                        , privateIp = ni.ip
+                        , routeTable = rt
+                        , networkACL = NetworkACLsResponse.find ni.subnetId networkACLs
+                        , group = task.group
+                        }
+                )
+                networkInfo
+                routeTable
+    in
+    Result.map3
+        (\ni -> Dict.updateList ni.subnetId)
+        networkInfo
+        task_
         nodesBySubnet
 
 

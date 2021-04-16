@@ -1,7 +1,7 @@
 {
     "NetworkInterfaces": [
         {
-           "Attachment": {
+            "Attachment": {
                 "AttachmentId": "ela-attach-68caf057",
                 "DeleteOnTermination": false,
                 "DeviceIndex": 1,
@@ -28,6 +28,138 @@
                     "Primary": true,
                     "PrivateDnsName": "ip-42-0-9-4.eu-west-1.compute.internal",
                     "PrivateIpAddress": "42.0.9.4"
+                }
+            ],
+            "RequesterId": "727180483921",
+            "RequesterManaged": true,
+            "SourceDestCheck": true,
+            "Status": "in-use",
+            "SubnetId": "subnet-0c8587ae21dd2f18a",
+            "TagSet": [],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Association": {
+                "IpOwnerId": "amazon-elb",
+                "PublicDnsName": "ec2-52-30-128-180.eu-west-1.compute.amazonaws.com",
+                "PublicIp": "52.30.128.180"
+            },
+            "Attachment": {
+                "AttachTime": "2021-04-09T18:52:01+00:00",
+                "AttachmentId": "eni-attach-03b9fee6eeb75317b",
+                "DeleteOnTermination": false,
+                "DeviceIndex": 1,
+                "NetworkCardIndex": 0,
+                "InstanceOwnerId": "amazon-elb",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "eu-west-1b",
+            "Description": "ELB app/oprah-load-balancer-development/bbeff858fb48c739",
+            "Groups": [
+                {
+                    "GroupName": "terraform-20200515152731786100000001",
+                    "GroupId": "sg-06ddd2ab91bc0de9a"
+                }
+            ],
+            "InterfaceType": "interface",
+            "Ipv6Addresses": [],
+            "MacAddress": "0a:ee:14:30:48:29",
+            "NetworkInterfaceId": "eni-030b66695785e31cf",
+            "OwnerId": "062881346168",
+            "PrivateDnsName": "ip-42-0-26-87.eu-west-1.compute.internal",
+            "PrivateIpAddress": "42.0.26.87",
+            "PrivateIpAddresses": [
+                {
+                    "Association": {
+                        "IpOwnerId": "amazon-elb",
+                        "PublicDnsName": "ec2-52-30-128-180.eu-west-1.compute.amazonaws.com",
+                        "PublicIp": "52.30.128.180"
+                    },
+                    "Primary": true,
+                    "PrivateDnsName": "ip-42-0-26-87.eu-west-1.compute.internal",
+                    "PrivateIpAddress": "42.0.26.87"
+                }
+            ],
+            "RequesterId": "amazon-elb",
+            "RequesterManaged": true,
+            "SourceDestCheck": true,
+            "Status": "in-use",
+            "SubnetId": "subnet-06b6493e0504e3071",
+            "TagSet": [],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Attachment": {
+                "AttachTime": "2021-04-15T12:49:20+00:00",
+                "AttachmentId": "eni-attach-0753118ed95623bb4",
+                "DeleteOnTermination": false,
+                "DeviceIndex": 1,
+                "NetworkCardIndex": 0,
+                "InstanceOwnerId": "121883958087",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "eu-west-1b",
+            "Description": "arn:aws:ecs:eu-west-1:062881346168:attachment/5101d57a-7ca6-459a-b4ec-4321b2840b9d",
+            "Groups": [
+                {
+                    "GroupName": "antivirus-api",
+                    "GroupId": "sg-0977fe939bab81b7a"
+                },
+                {
+                    "GroupName": "mrdp-oprah-ecs-backend-service-security-group-development",
+                    "GroupId": "sg-0c67182082dfb4836"
+                }
+            ],
+            "InterfaceType": "interface",
+            "Ipv6Addresses": [],
+            "MacAddress": "0a:8b:f5:66:77:ad",
+            "NetworkInterfaceId": "eni-03e8f0c22af2dad4a",
+            "OwnerId": "062881346168",
+            "PrivateDnsName": "ip-42-0-11-194.eu-west-1.compute.internal",
+            "PrivateIpAddress": "42.0.11.194",
+            "PrivateIpAddresses": [
+                {
+                    "Primary": true,
+                    "PrivateDnsName": "ip-42-0-11-194.eu-west-1.compute.internal",
+                    "PrivateIpAddress": "42.0.11.194"
+                }
+            ],
+            "RequesterId": "578734482556",
+            "RequesterManaged": true,
+            "SourceDestCheck": true,
+            "Status": "in-use",
+            "SubnetId": "subnet-0c8587ae21dd2f18a",
+            "TagSet": [],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Attachment": {
+                "AttachmentId": "ela-attach-a8c3f997",
+                "DeleteOnTermination": false,
+                "DeviceIndex": 1,
+                "InstanceOwnerId": "amazon-aws",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "eu-west-1b",
+            "Description": "VPC Endpoint Interface vpce-0d3a81a73768da641",
+            "Groups": [
+                {
+                    "GroupName": "vpc_interface_endpoints",
+                    "GroupId": "sg-0fa2e35964a5a56d9"
+                }
+            ],
+            "InterfaceType": "vpc_endpoint",
+            "Ipv6Addresses": [],
+            "MacAddress": "0a:1e:ac:3d:e3:49",
+            "NetworkInterfaceId": "eni-0b02e96cd8597a25c",
+            "OwnerId": "062881346168",
+            "PrivateDnsName": "ip-42-0-13-122.eu-west-1.compute.internal",
+            "PrivateIpAddress": "42.0.13.122",
+            "PrivateIpAddresses": [
+                {
+                    "Primary": true,
+                    "PrivateDnsName": "ip-42-0-13-122.eu-west-1.compute.internal",
+                    "PrivateIpAddress": "42.0.13.122"
                 }
             ],
             "RequesterId": "727180483921",
@@ -116,146 +248,14 @@
         },
         {
             "Attachment": {
-                "AttachmentId": "ela-attach-a8c3f997",
-                "DeleteOnTermination": false,
-                "DeviceIndex": 1,
-                "InstanceOwnerId": "amazon-aws",
-                "Status": "attached"
-            },
-            "AvailabilityZone": "eu-west-1b",
-            "Description": "VPC Endpoint Interface vpce-0d3a81a73768da641",
-            "Groups": [
-                {
-                    "GroupName": "vpc_interface_endpoints",
-                    "GroupId": "sg-0fa2e35964a5a56d9"
-                }
-            ],
-            "InterfaceType": "vpc_endpoint",
-            "Ipv6Addresses": [],
-            "MacAddress": "0a:1e:ac:3d:e3:49",
-            "NetworkInterfaceId": "eni-0b02e96cd8597a25c",
-            "OwnerId": "062881346168",
-            "PrivateDnsName": "ip-42-0-13-122.eu-west-1.compute.internal",
-            "PrivateIpAddress": "42.0.13.122",
-            "PrivateIpAddresses": [
-                {
-                    "Primary": true,
-                    "PrivateDnsName": "ip-42-0-13-122.eu-west-1.compute.internal",
-                    "PrivateIpAddress": "42.0.13.122"
-                }
-            ],
-            "RequesterId": "727180483921",
-            "RequesterManaged": true,
-            "SourceDestCheck": true,
-            "Status": "in-use",
-            "SubnetId": "subnet-0c8587ae21dd2f18a",
-            "TagSet": [],
-            "VpcId": "vpc-02a34f69639e5d566"
-        },
-        {
-            "Attachment": {
-                "AttachTime": "2021-04-01T14:39:42+00:00",
-                "AttachmentId": "eni-attach-06e497df7c1e7ec4b",
-                "DeleteOnTermination": false,
-                "DeviceIndex": 1,
-                "NetworkCardIndex": 0,
-                "InstanceOwnerId": "081737754932",
-                "Status": "attached"
-            },
-            "AvailabilityZone": "eu-west-1b",
-            "Description": "arn:aws:ecs:eu-west-1:062881346168:attachment/36b03121-1bff-461c-887e-216b8536508c",
-            "Groups": [
-                {
-                    "GroupName": "antivirus-api",
-                    "GroupId": "sg-0977fe939bab81b7a"
-                },
-                {
-                    "GroupName": "mrdp-oprah-ecs-backend-service-security-group-development",
-                    "GroupId": "sg-0c67182082dfb4836"
-                }
-            ],
-            "InterfaceType": "interface",
-            "Ipv6Addresses": [],
-            "MacAddress": "0a:15:64:8d:0a:1f",
-            "NetworkInterfaceId": "eni-0bf3a770dc67b2a77",
-            "OwnerId": "062881346168",
-            "PrivateDnsName": "ip-42-0-14-229.eu-west-1.compute.internal",
-            "PrivateIpAddress": "42.0.14.229",
-            "PrivateIpAddresses": [
-                {
-                    "Primary": true,
-                    "PrivateDnsName": "ip-42-0-14-229.eu-west-1.compute.internal",
-                    "PrivateIpAddress": "42.0.14.229"
-                }
-            ],
-            "RequesterId": "578734482556",
-            "RequesterManaged": true,
-            "SourceDestCheck": true,
-            "Status": "in-use",
-            "SubnetId": "subnet-0c8587ae21dd2f18a",
-            "TagSet": [],
-            "VpcId": "vpc-02a34f69639e5d566"
-        },
-        {
-            "Association": {
-                "IpOwnerId": "amazon-elb",
-                "PublicDnsName": "ec2-99-81-77-109.eu-west-1.compute.amazonaws.com",
-                "PublicIp": "99.81.77.109"
-            },
-            "Attachment": {
-                "AttachTime": "2021-02-17T13:36:25+00:00",
-                "AttachmentId": "eni-attach-03bca137febe9ed19",
-                "DeleteOnTermination": false,
-                "DeviceIndex": 1,
-                "NetworkCardIndex": 0,
-                "InstanceOwnerId": "amazon-elb",
-                "Status": "attached"
-            },
-            "AvailabilityZone": "eu-west-1b",
-            "Description": "ELB app/oprah-load-balancer-development/bbeff858fb48c739",
-            "Groups": [
-                {
-                    "GroupName": "terraform-20200515152731786100000001",
-                    "GroupId": "sg-06ddd2ab91bc0de9a"
-                }
-            ],
-            "InterfaceType": "interface",
-            "Ipv6Addresses": [],
-            "MacAddress": "0a:99:fd:2b:2d:f3",
-            "NetworkInterfaceId": "eni-0ecd488577893e1ca",
-            "OwnerId": "062881346168",
-            "PrivateDnsName": "ip-42-0-27-172.eu-west-1.compute.internal",
-            "PrivateIpAddress": "42.0.27.172",
-            "PrivateIpAddresses": [
-                {
-                    "Association": {
-                        "IpOwnerId": "amazon-elb",
-                        "PublicDnsName": "ec2-99-81-77-109.eu-west-1.compute.amazonaws.com",
-                        "PublicIp": "99.81.77.109"
-                    },
-                    "Primary": true,
-                    "PrivateDnsName": "ip-42-0-27-172.eu-west-1.compute.internal",
-                    "PrivateIpAddress": "42.0.27.172"
-                }
-            ],
-            "RequesterId": "amazon-elb",
-            "RequesterManaged": true,
-            "SourceDestCheck": true,
-            "Status": "in-use",
-            "SubnetId": "subnet-06b6493e0504e3071",
-            "TagSet": [],
-            "VpcId": "vpc-02a34f69639e5d566"
-        },
-        {
-            "Attachment": {
-                "AttachmentId": "ela-attach-a9ad8590",
+                "AttachmentId": "ela-attach-feab83c7",
                 "DeleteOnTermination": false,
                 "DeviceIndex": 1,
                 "InstanceOwnerId": "amazon-aws",
                 "Status": "attached"
             },
             "AvailabilityZone": "eu-west-1a",
-            "Description": "VPC Endpoint Interface vpce-0d3a81a73768da641",
+            "Description": "VPC Endpoint Interface vpce-0c747a65e8883a8e0",
             "Groups": [
                 {
                     "GroupName": "vpc_interface_endpoints",
@@ -264,19 +264,59 @@
             ],
             "InterfaceType": "vpc_endpoint",
             "Ipv6Addresses": [],
-            "MacAddress": "06:53:f4:ee:7d:dd",
-            "NetworkInterfaceId": "eni-0cd37a2defe37a3ab",
+            "MacAddress": "06:5e:00:5a:3b:5f",
+            "NetworkInterfaceId": "eni-0e0f545661263a42d",
             "OwnerId": "062881346168",
-            "PrivateDnsName": "ip-42-0-7-210.eu-west-1.compute.internal",
-            "PrivateIpAddress": "42.0.7.210",
+            "PrivateDnsName": "ip-42-0-7-70.eu-west-1.compute.internal",
+            "PrivateIpAddress": "42.0.7.70",
             "PrivateIpAddresses": [
                 {
                     "Primary": true,
-                    "PrivateDnsName": "ip-42-0-7-210.eu-west-1.compute.internal",
-                    "PrivateIpAddress": "42.0.7.210"
+                    "PrivateDnsName": "ip-42-0-7-70.eu-west-1.compute.internal",
+                    "PrivateIpAddress": "42.0.7.70"
                 }
             ],
             "RequesterId": "727180483921",
+            "RequesterManaged": true,
+            "SourceDestCheck": true,
+            "Status": "in-use",
+            "SubnetId": "subnet-06b385372a02a26f9",
+            "TagSet": [],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Attachment": {
+                "AttachTime": "2020-10-29T13:29:40+00:00",
+                "AttachmentId": "eni-attach-004c92e218dca06d1",
+                "DeleteOnTermination": false,
+                "DeviceIndex": 1,
+                "NetworkCardIndex": 0,
+                "InstanceOwnerId": "amazon-rds",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "eu-west-1a",
+            "Description": "RDSNetworkInterface",
+            "Groups": [
+                {
+                    "GroupName": "terraform-20200129154733212400000001",
+                    "GroupId": "sg-0e6877f983f64501c"
+                }
+            ],
+            "InterfaceType": "interface",
+            "Ipv6Addresses": [],
+            "MacAddress": "06:27:42:0f:19:2b",
+            "NetworkInterfaceId": "eni-088f0957cdd4a5b9b",
+            "OwnerId": "062881346168",
+            "PrivateDnsName": "ip-42-0-7-200.eu-west-1.compute.internal",
+            "PrivateIpAddress": "42.0.7.200",
+            "PrivateIpAddresses": [
+                {
+                    "Primary": true,
+                    "PrivateDnsName": "ip-42-0-7-200.eu-west-1.compute.internal",
+                    "PrivateIpAddress": "42.0.7.200"
+                }
+            ],
+            "RequesterId": "amazon-rds",
             "RequesterManaged": true,
             "SourceDestCheck": true,
             "Status": "in-use",
@@ -333,8 +373,8 @@
         },
         {
             "Attachment": {
-                "AttachTime": "2021-04-01T14:39:43+00:00",
-                "AttachmentId": "eni-attach-06a4b8c4fde41c9b9",
+                "AttachTime": "2021-04-15T12:49:22+00:00",
+                "AttachmentId": "eni-attach-09cca0fccee8b724e",
                 "DeleteOnTermination": false,
                 "DeviceIndex": 1,
                 "NetworkCardIndex": 0,
@@ -342,7 +382,7 @@
                 "Status": "attached"
             },
             "AvailabilityZone": "eu-west-1a",
-            "Description": "arn:aws:ecs:eu-west-1:062881346168:attachment/1ff8ea8d-7d21-419b-8379-5b09eefb7368",
+            "Description": "arn:aws:ecs:eu-west-1:062881346168:attachment/0c4519c6-e490-4078-916c-7275edc4cce3",
             "Groups": [
                 {
                     "GroupName": "antivirus-api",
@@ -355,19 +395,107 @@
             ],
             "InterfaceType": "interface",
             "Ipv6Addresses": [],
-            "MacAddress": "06:b4:b4:38:6a:69",
-            "NetworkInterfaceId": "eni-0455d4a75ebff8c08",
+            "MacAddress": "06:b4:c6:5d:8d:19",
+            "NetworkInterfaceId": "eni-05e780726799ba6d6",
             "OwnerId": "062881346168",
-            "PrivateDnsName": "ip-42-0-0-158.eu-west-1.compute.internal",
-            "PrivateIpAddress": "42.0.0.158",
+            "PrivateDnsName": "ip-42-0-4-102.eu-west-1.compute.internal",
+            "PrivateIpAddress": "42.0.4.102",
             "PrivateIpAddresses": [
                 {
                     "Primary": true,
-                    "PrivateDnsName": "ip-42-0-0-158.eu-west-1.compute.internal",
-                    "PrivateIpAddress": "42.0.0.158"
+                    "PrivateDnsName": "ip-42-0-4-102.eu-west-1.compute.internal",
+                    "PrivateIpAddress": "42.0.4.102"
                 }
             ],
             "RequesterId": "578734482556",
+            "RequesterManaged": true,
+            "SourceDestCheck": true,
+            "Status": "in-use",
+            "SubnetId": "subnet-06b385372a02a26f9",
+            "TagSet": [],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Association": {
+                "IpOwnerId": "amazon-elb",
+                "PublicDnsName": "ec2-108-128-59-111.eu-west-1.compute.amazonaws.com",
+                "PublicIp": "108.128.59.111"
+            },
+            "Attachment": {
+                "AttachTime": "2021-04-09T18:51:55+00:00",
+                "AttachmentId": "eni-attach-055f6d45ad567df03",
+                "DeleteOnTermination": false,
+                "DeviceIndex": 1,
+                "NetworkCardIndex": 0,
+                "InstanceOwnerId": "amazon-elb",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "eu-west-1a",
+            "Description": "ELB app/oprah-load-balancer-development/bbeff858fb48c739",
+            "Groups": [
+                {
+                    "GroupName": "terraform-20200515152731786100000001",
+                    "GroupId": "sg-06ddd2ab91bc0de9a"
+                }
+            ],
+            "InterfaceType": "interface",
+            "Ipv6Addresses": [],
+            "MacAddress": "06:43:65:d5:ae:57",
+            "NetworkInterfaceId": "eni-0156406eae8014d3b",
+            "OwnerId": "062881346168",
+            "PrivateDnsName": "ip-42-0-23-6.eu-west-1.compute.internal",
+            "PrivateIpAddress": "42.0.23.6",
+            "PrivateIpAddresses": [
+                {
+                    "Association": {
+                        "IpOwnerId": "amazon-elb",
+                        "PublicDnsName": "ec2-108-128-59-111.eu-west-1.compute.amazonaws.com",
+                        "PublicIp": "108.128.59.111"
+                    },
+                    "Primary": true,
+                    "PrivateDnsName": "ip-42-0-23-6.eu-west-1.compute.internal",
+                    "PrivateIpAddress": "42.0.23.6"
+                }
+            ],
+            "RequesterId": "amazon-elb",
+            "RequesterManaged": true,
+            "SourceDestCheck": true,
+            "Status": "in-use",
+            "SubnetId": "subnet-0926c582dfc511c89",
+            "TagSet": [],
+            "VpcId": "vpc-02a34f69639e5d566"
+        },
+        {
+            "Attachment": {
+                "AttachmentId": "ela-attach-a9ad8590",
+                "DeleteOnTermination": false,
+                "DeviceIndex": 1,
+                "InstanceOwnerId": "amazon-aws",
+                "Status": "attached"
+            },
+            "AvailabilityZone": "eu-west-1a",
+            "Description": "VPC Endpoint Interface vpce-0d3a81a73768da641",
+            "Groups": [
+                {
+                    "GroupName": "vpc_interface_endpoints",
+                    "GroupId": "sg-0fa2e35964a5a56d9"
+                }
+            ],
+            "InterfaceType": "vpc_endpoint",
+            "Ipv6Addresses": [],
+            "MacAddress": "06:53:f4:ee:7d:dd",
+            "NetworkInterfaceId": "eni-0cd37a2defe37a3ab",
+            "OwnerId": "062881346168",
+            "PrivateDnsName": "ip-42-0-7-210.eu-west-1.compute.internal",
+            "PrivateIpAddress": "42.0.7.210",
+            "PrivateIpAddresses": [
+                {
+                    "Primary": true,
+                    "PrivateDnsName": "ip-42-0-7-210.eu-west-1.compute.internal",
+                    "PrivateIpAddress": "42.0.7.210"
+                }
+            ],
+            "RequesterId": "727180483921",
             "RequesterManaged": true,
             "SourceDestCheck": true,
             "Status": "in-use",
@@ -484,134 +612,6 @@
                 }
             ],
             "RequesterId": "727180483921",
-            "RequesterManaged": true,
-            "SourceDestCheck": true,
-            "Status": "in-use",
-            "SubnetId": "subnet-06b385372a02a26f9",
-            "TagSet": [],
-            "VpcId": "vpc-02a34f69639e5d566"
-        },
-        {
-            "Attachment": {
-                "AttachmentId": "ela-attach-feab83c7",
-                "DeleteOnTermination": false,
-                "DeviceIndex": 1,
-                "InstanceOwnerId": "amazon-aws",
-                "Status": "attached"
-            },
-            "AvailabilityZone": "eu-west-1a",
-            "Description": "VPC Endpoint Interface vpce-0c747a65e8883a8e0",
-            "Groups": [
-                {
-                    "GroupName": "vpc_interface_endpoints",
-                    "GroupId": "sg-0fa2e35964a5a56d9"
-                }
-            ],
-            "InterfaceType": "vpc_endpoint",
-            "Ipv6Addresses": [],
-            "MacAddress": "06:5e:00:5a:3b:5f",
-            "NetworkInterfaceId": "eni-0e0f545661263a42d",
-            "OwnerId": "062881346168",
-            "PrivateDnsName": "ip-42-0-7-70.eu-west-1.compute.internal",
-            "PrivateIpAddress": "42.0.7.70",
-            "PrivateIpAddresses": [
-                {
-                    "Primary": true,
-                    "PrivateDnsName": "ip-42-0-7-70.eu-west-1.compute.internal",
-                    "PrivateIpAddress": "42.0.7.70"
-                }
-            ],
-            "RequesterId": "727180483921",
-            "RequesterManaged": true,
-            "SourceDestCheck": true,
-            "Status": "in-use",
-            "SubnetId": "subnet-06b385372a02a26f9",
-            "TagSet": [],
-            "VpcId": "vpc-02a34f69639e5d566"
-        },
-        {
-            "Association": {
-                "IpOwnerId": "amazon-elb",
-                "PublicDnsName": "ec2-54-77-37-38.eu-west-1.compute.amazonaws.com",
-                "PublicIp": "54.77.37.38"
-            },
-            "Attachment": {
-                "AttachTime": "2021-02-25T15:31:26+00:00",
-                "AttachmentId": "eni-attach-0cb6198b0f98d11a4",
-                "DeleteOnTermination": false,
-                "DeviceIndex": 1,
-                "NetworkCardIndex": 0,
-                "InstanceOwnerId": "amazon-elb",
-                "Status": "attached"
-            },
-            "AvailabilityZone": "eu-west-1a",
-            "Description": "ELB app/oprah-load-balancer-development/bbeff858fb48c739",
-            "Groups": [
-                {
-                    "GroupName": "terraform-20200515152731786100000001",
-                    "GroupId": "sg-06ddd2ab91bc0de9a"
-                }
-            ],
-            "InterfaceType": "interface",
-            "Ipv6Addresses": [],
-            "MacAddress": "06:ee:6c:95:ea:8d",
-            "NetworkInterfaceId": "eni-0b2c6ccd177a6884c",
-            "OwnerId": "062881346168",
-            "PrivateDnsName": "ip-42-0-22-147.eu-west-1.compute.internal",
-            "PrivateIpAddress": "42.0.22.147",
-            "PrivateIpAddresses": [
-                {
-                    "Association": {
-                        "IpOwnerId": "amazon-elb",
-                        "PublicDnsName": "ec2-54-77-37-38.eu-west-1.compute.amazonaws.com",
-                        "PublicIp": "54.77.37.38"
-                    },
-                    "Primary": true,
-                    "PrivateDnsName": "ip-42-0-22-147.eu-west-1.compute.internal",
-                    "PrivateIpAddress": "42.0.22.147"
-                }
-            ],
-            "RequesterId": "amazon-elb",
-            "RequesterManaged": true,
-            "SourceDestCheck": true,
-            "Status": "in-use",
-            "SubnetId": "subnet-0926c582dfc511c89",
-            "TagSet": [],
-            "VpcId": "vpc-02a34f69639e5d566"
-        },
-        {
-            "Attachment": {
-                "AttachTime": "2020-10-29T13:29:40+00:00",
-                "AttachmentId": "eni-attach-004c92e218dca06d1",
-                "DeleteOnTermination": false,
-                "DeviceIndex": 1,
-                "NetworkCardIndex": 0,
-                "InstanceOwnerId": "amazon-rds",
-                "Status": "attached"
-            },
-            "AvailabilityZone": "eu-west-1a",
-            "Description": "RDSNetworkInterface",
-            "Groups": [
-                {
-                    "GroupName": "terraform-20200129154733212400000001",
-                    "GroupId": "sg-0e6877f983f64501c"
-                }
-            ],
-            "InterfaceType": "interface",
-            "Ipv6Addresses": [],
-            "MacAddress": "06:27:42:0f:19:2b",
-            "NetworkInterfaceId": "eni-088f0957cdd4a5b9b",
-            "OwnerId": "062881346168",
-            "PrivateDnsName": "ip-42-0-7-200.eu-west-1.compute.internal",
-            "PrivateIpAddress": "42.0.7.200",
-            "PrivateIpAddresses": [
-                {
-                    "Primary": true,
-                    "PrivateDnsName": "ip-42-0-7-200.eu-west-1.compute.internal",
-                    "PrivateIpAddress": "42.0.7.200"
-                }
-            ],
-            "RequesterId": "amazon-rds",
             "RequesterManaged": true,
             "SourceDestCheck": true,
             "Status": "in-use",

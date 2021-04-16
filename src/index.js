@@ -10,6 +10,7 @@ import {
     DescribeNetworkInterfacesCommand,
 } from "@aws-sdk/client-ec2";
 import {RDSClient, DescribeDBInstancesCommand} from "@aws-sdk/client-rds"
+import {ECSClient, ListClustersCommand, ListTasksCommand, DescribeTasksCommand} from "@aws-sdk/client-ecs"
 
 // stubbed responses below
 import vpcsResponse from "./aws-fixtures/describe-vpcs.json"
@@ -20,6 +21,7 @@ import routeTablesResponse from "./aws-fixtures/describe-route-tables.json"
 import networkACLsResponse from "./aws-fixtures/describe-network-acls.json"
 import networkInterfacesResponse from "./aws-fixtures/describe-network-interfaces.json"
 import dbInstancesResponse from "./aws-fixtures/describe-db-instances.json"
+import ecsTasksResponse from "./aws-fixtures/describe-ecs-tasks.json"
 
 
 const environment = process.env.NODE_ENV
@@ -66,6 +68,7 @@ const awsClient = (credentials, onDataReceived) => (
                     ec2Client.send(new DescribeNetworkAclsCommand({})),
                     ec2Client.send(new DescribeNetworkInterfacesCommand({})),
                     rdsClient.send(new DescribeDBInstancesCommand({})),
+                    getTheEcs()
                 ])
                 .then(responses => {
                     const [
@@ -77,6 +80,7 @@ const awsClient = (credentials, onDataReceived) => (
                         networkACLs,
                         networkInterfaces,
                         dbInstances,
+                        ecsTasks
                     ] = responses
 
                     const awsData = {
@@ -87,7 +91,8 @@ const awsClient = (credentials, onDataReceived) => (
                         routeTablesResponse: routeTables.RouteTables,
                         networkACLsResponse: networkACLs.NetworkAcls,
                         networkInterfacesResponse: networkInterfaces.NetworkInterfaces,
-                        dbInstancesResponse: dbInstances.DBInstances
+                        dbInstancesResponse: dbInstances.DBInstances,
+                        ecsTasksResponse: ecsTasks.Tasks
                     }
                     onDataReceived(awsData)
                 })
@@ -106,9 +111,47 @@ const stubbedClient = (onDataReceived) => (
                 routeTablesResponse: routeTablesResponse.RouteTables,
                 networkACLsResponse: networkACLsResponse.NetworkAcls,
                 networkInterfacesResponse: networkInterfacesResponse.NetworkInterfaces,
-                dbInstancesResponse: dbInstancesResponse.DBInstances
+                dbInstancesResponse: dbInstancesResponse.DBInstances,
+                ecsTasksResponse: ecsTasksResponse.Tasks,
             }
             onDataReceived(awsData)
         }
     }
 )
+
+
+// messing with ECS
+
+function getTheEcs() {
+    const client = new ECSClient({
+        region: "eu-west-1",
+        credentials: {
+            accessKeyId: "",
+            secretAccessKey: "",
+            sessionToken: ""
+        }
+    });
+
+    return client
+        .send(new ListClustersCommand({}))
+        .then(clusters => Promise.all(
+            clusters.clusterArns.map(cluster =>
+                client
+                    .send(new ListTasksCommand({cluster: cluster}))
+                    .then(tasks => ({
+                            taskArns: tasks.taskArns,
+                            cluster: cluster
+                        })
+                    )
+            )))
+        .then(tasks => Promise.all(
+            tasks.map(taskStuff => client.send(new DescribeTasksCommand({
+                tasks: taskStuff.taskArns,
+                cluster: taskStuff.cluster
+            })))
+        ))
+        .then(describedTasks =>
+            ({Tasks: describedTasks.flatMap(tasks => tasks.tasks)})
+        )
+
+}

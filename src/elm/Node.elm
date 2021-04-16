@@ -6,6 +6,7 @@ module Node exposing
     , allowsEgress
     , allowsIngress
     , buildEc2
+    , buildEcsTask
     , buildRds
     , canAccessInternet
     , equals
@@ -17,6 +18,7 @@ module Node exposing
 
 import IpAddress exposing (Ipv4Address)
 import Node.Ec2 as Ec2 exposing (Ec2)
+import Node.EcsTask as EcsTask exposing (EcsTask)
 import Node.Rds as Rds exposing (Rds)
 import Port exposing (Port)
 import Protocol exposing (Protocol)
@@ -42,6 +44,7 @@ type Node
 type VpcNode
     = Ec2 Ec2
     | Rds Rds
+    | EcsTask EcsTask
 
 
 type alias Node_ =
@@ -88,6 +91,9 @@ vpcNodeEquals node otherNode =
         ( Rds rds, Rds otherRds ) ->
             Rds.equals rds otherRds
 
+        ( EcsTask ecs, EcsTask otherEcs ) ->
+            EcsTask.equals ecs otherEcs
+
         ( _, _ ) ->
             False
 
@@ -114,6 +120,9 @@ idAsString node_ =
 
         Vpc _ (Rds rds) ->
             Rds.idAsString rds
+
+        Vpc _ (EcsTask ecs) ->
+            EcsTask.idAsString ecs
 
 
 allowsEgress : Node -> Node -> Protocol -> Port -> Bool
@@ -215,6 +224,9 @@ vpcNodeCanAccessInternet node =
         Rds rds ->
             Rds.canAccessInternet rds
 
+        EcsTask ecsTask ->
+            EcsTask.canAccessInternet ecsTask
+
 
 
 -- Builders
@@ -237,6 +249,11 @@ buildEc2 config =
 buildRds : Config (Rds.Config a) -> Node
 buildRds config =
     Vpc (buildVpcNode config) (Rds (Rds.build config))
+
+
+buildEcsTask : Config (EcsTask.Config a) -> Node
+buildEcsTask config =
+    Vpc (buildVpcNode config) (EcsTask (EcsTask.build config))
 
 
 buildVpcNode : Config a -> Node_

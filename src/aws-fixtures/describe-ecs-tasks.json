@@ -1,0 +1,204 @@
+{
+  "Tasks": [
+    {
+      "attachments": [
+        {
+          "details": [
+            {
+              "name": "subnetId",
+              "value": "subnet-06b385372a02a26f9"
+            },
+            {
+              "name": "networkInterfaceId",
+              "value": "eni-05e780726799ba6d6"
+            },
+            {
+              "name": "macAddress",
+              "value": "06:b4:c6:5d:8d:19"
+            },
+            {
+              "name": "privateDnsName",
+              "value": "ip-42-0-4-102.eu-west-1.compute.internal"
+            },
+            {
+              "name": "privateIPv4Address",
+              "value": "42.0.4.102"
+            }
+          ],
+          "id": "0c4519c6-e490-4078-916c-7275edc4cce3",
+          "status": "ATTACHED",
+          "type": "ElasticNetworkInterface"
+        }
+      ],
+      "availabilityZone": "eu-west-1a",
+      "clusterArn": "arn:aws:ecs:eu-west-1:062881346168:cluster/mrdp-oprah-ecs-cluster-development",
+      "connectivity": "CONNECTED",
+      "connectivityAt": "2021-04-15T12:49:21.451Z",
+      "containers": [
+        {
+          "containerArn": "arn:aws:ecs:eu-west-1:062881346168:container/mrdp-oprah-ecs-cluster-development/7f9dddd693174c0186fcf306a8524793/231a6be4-b954-44c1-b47f-4ffd8a1c5778",
+          "cpu": "0",
+          "healthStatus": "UNKNOWN",
+          "image": "259367960442.dkr.ecr.eu-west-1.amazonaws.com/backend-docker-repository:1ffc617238eb104fed4f252a29b882de0616797a",
+          "imageDigest": "sha256:b35c902b69d89e7d28a18d0bce01459230358800aa4c2739693840b86d551eac",
+          "lastStatus": "RUNNING",
+          "name": "mrdp-oprah",
+          "networkBindings": [],
+          "networkInterfaces": [
+            {
+              "attachmentId": "0c4519c6-e490-4078-916c-7275edc4cce3",
+              "privateIpv4Address": "42.0.4.102"
+            }
+          ],
+          "runtimeId": "7f9dddd693174c0186fcf306a8524793-899022761",
+          "taskArn": "arn:aws:ecs:eu-west-1:062881346168:task/mrdp-oprah-ecs-cluster-development/7f9dddd693174c0186fcf306a8524793"
+        },
+        {
+          "containerArn": "arn:aws:ecs:eu-west-1:062881346168:container/mrdp-oprah-ecs-cluster-development/7f9dddd693174c0186fcf306a8524793/6de5f588-1f22-4f39-acf2-ba658f342e62",
+          "cpu": "0",
+          "healthStatus": "UNKNOWN",
+          "image": "datadog/agent:latest",
+          "lastStatus": "RUNNING",
+          "name": "datadog-agent",
+          "networkBindings": [],
+          "networkInterfaces": [
+            {
+              "attachmentId": "0c4519c6-e490-4078-916c-7275edc4cce3",
+              "privateIpv4Address": "42.0.4.102"
+            }
+          ],
+          "runtimeId": "7f9dddd693174c0186fcf306a8524793-2537586469",
+          "taskArn": "arn:aws:ecs:eu-west-1:062881346168:task/mrdp-oprah-ecs-cluster-development/7f9dddd693174c0186fcf306a8524793"
+        }
+      ],
+      "cpu": "1024",
+      "createdAt": "2021-04-15T12:49:16.086Z",
+      "desiredStatus": "RUNNING",
+      "group": "service:mrdp-oprah-backend-ecs-service-development",
+      "healthStatus": "UNKNOWN",
+      "lastStatus": "RUNNING",
+      "launchType": "FARGATE",
+      "memory": "4096",
+      "overrides": {
+        "containerOverrides": [
+          {
+            "name": "mrdp-oprah"
+          },
+          {
+            "name": "datadog-agent"
+          }
+        ],
+        "inferenceAcceleratorOverrides": []
+      },
+      "platformVersion": "1.4.0",
+      "pullStartedAt": "2021-04-15T12:49:36.631Z",
+      "pullStoppedAt": "2021-04-15T12:50:10.440Z",
+      "startedAt": "2021-04-15T12:50:20.556Z",
+      "startedBy": "ecs-svc/2438369314344631174",
+      "tags": [],
+      "taskArn": "arn:aws:ecs:eu-west-1:062881346168:task/mrdp-oprah-ecs-cluster-development/7f9dddd693174c0186fcf306a8524793",
+      "taskDefinitionArn": "arn:aws:ecs:eu-west-1:062881346168:task-definition/mrdp-oprah:919",
+      "version": 3
+    },
+    {
+      "attachments": [
+        {
+          "details": [
+            {
+              "name": "subnetId",
+              "value": "subnet-0c8587ae21dd2f18a"
+            },
+            {
+              "name": "networkInterfaceId",
+              "value": "eni-03e8f0c22af2dad4a"
+            },
+            {
+              "name": "macAddress",
+              "value": "0a:8b:f5:66:77:ad"
+            },
+            {
+              "name": "privateDnsName",
+              "value": "ip-42-0-11-194.eu-west-1.compute.internal"
+            },
+            {
+              "name": "privateIPv4Address",
+              "value": "42.0.11.194"
+            }
+          ],
+          "id": "5101d57a-7ca6-459a-b4ec-4321b2840b9d",
+          "status": "ATTACHED",
+          "type": "ElasticNetworkInterface"
+        }
+      ],
+      "availabilityZone": "eu-west-1b",
+      "clusterArn": "arn:aws:ecs:eu-west-1:062881346168:cluster/mrdp-oprah-ecs-cluster-development",
+      "connectivity": "CONNECTED",
+      "connectivityAt": "2021-04-15T12:49:19.955Z",
+      "containers": [
+        {
+          "containerArn": "arn:aws:ecs:eu-west-1:062881346168:container/mrdp-oprah-ecs-cluster-development/cb8d6b2e4f5448bba04f4e8d15ffc564/20d4d6da-7bee-49c9-9b4b-e5622931f7b4",
+          "cpu": "0",
+          "healthStatus": "UNKNOWN",
+          "image": "datadog/agent:latest",
+          "lastStatus": "RUNNING",
+          "name": "datadog-agent",
+          "networkBindings": [],
+          "networkInterfaces": [
+            {
+              "attachmentId": "5101d57a-7ca6-459a-b4ec-4321b2840b9d",
+              "privateIpv4Address": "42.0.11.194"
+            }
+          ],
+          "runtimeId": "cb8d6b2e4f5448bba04f4e8d15ffc564-2537586469",
+          "taskArn": "arn:aws:ecs:eu-west-1:062881346168:task/mrdp-oprah-ecs-cluster-development/cb8d6b2e4f5448bba04f4e8d15ffc564"
+        },
+        {
+          "containerArn": "arn:aws:ecs:eu-west-1:062881346168:container/mrdp-oprah-ecs-cluster-development/cb8d6b2e4f5448bba04f4e8d15ffc564/47c6612b-eab9-438f-9b97-8017389d1c4d",
+          "cpu": "0",
+          "healthStatus": "UNKNOWN",
+          "image": "259367960442.dkr.ecr.eu-west-1.amazonaws.com/backend-docker-repository:1ffc617238eb104fed4f252a29b882de0616797a",
+          "imageDigest": "sha256:b35c902b69d89e7d28a18d0bce01459230358800aa4c2739693840b86d551eac",
+          "lastStatus": "RUNNING",
+          "name": "mrdp-oprah",
+          "networkBindings": [],
+          "networkInterfaces": [
+            {
+              "attachmentId": "5101d57a-7ca6-459a-b4ec-4321b2840b9d",
+              "privateIpv4Address": "42.0.11.194"
+            }
+          ],
+          "runtimeId": "cb8d6b2e4f5448bba04f4e8d15ffc564-899022761",
+          "taskArn": "arn:aws:ecs:eu-west-1:062881346168:task/mrdp-oprah-ecs-cluster-development/cb8d6b2e4f5448bba04f4e8d15ffc564"
+        }
+      ],
+      "cpu": "1024",
+      "createdAt": "2021-04-15T12:49:16.086Z",
+      "desiredStatus": "RUNNING",
+      "group": "service:mrdp-oprah-backend-ecs-service-development",
+      "healthStatus": "UNKNOWN",
+      "lastStatus": "RUNNING",
+      "launchType": "FARGATE",
+      "memory": "4096",
+      "overrides": {
+        "containerOverrides": [
+          {
+            "name": "mrdp-oprah"
+          },
+          {
+            "name": "datadog-agent"
+          }
+        ],
+        "inferenceAcceleratorOverrides": []
+      },
+      "platformVersion": "1.4.0",
+      "pullStartedAt": "2021-04-15T12:49:35.496Z",
+      "pullStoppedAt": "2021-04-15T12:50:08.999Z",
+      "startedAt": "2021-04-15T12:50:19.367Z",
+      "startedBy": "ecs-svc/2438369314344631174",
+      "tags": [],
+      "taskArn": "arn:aws:ecs:eu-west-1:062881346168:task/mrdp-oprah-ecs-cluster-development/cb8d6b2e4f5448bba04f4e8d15ffc564",
+      "taskDefinitionArn": "arn:aws:ecs:eu-west-1:062881346168:task-definition/mrdp-oprah:919",
+      "version": 3
+    }
+  ]
+}

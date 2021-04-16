@@ -1,6 +1,7 @@
 module Api.NetworkInterfacesResponse exposing
     ( NetworkInterfacesResponse
     , decoder
+    , findForAddress
     , findRdsInfo
     )
 
@@ -46,6 +47,13 @@ findRdsInfo { vpcId, subnetIds, securityGroups } =
         >> List.filter (.instanceOwnerId >> (==) "amazon-rds")
         >> List.head
         >> Result.fromMaybe "Could not find networkInfo for Rds"
+
+
+findForAddress : Ipv4Address -> NetworkInterfacesResponse -> Result String NetworkInterfaceResponse
+findForAddress address =
+    List.filter (.ip >> (==) address)
+        >> List.head
+        >> Result.fromMaybe "Could not find networkInfo"
 
 
 decoder : Json.Decoder NetworkInterfacesResponse
