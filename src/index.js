@@ -11,6 +11,7 @@ import {
 } from "@aws-sdk/client-ec2";
 import {RDSClient, DescribeDBInstancesCommand} from "@aws-sdk/client-rds"
 import {ECSClient, ListClustersCommand, ListTasksCommand, DescribeTasksCommand} from "@aws-sdk/client-ecs"
+import {ElasticLoadBalancingV2, DescribeLoadBalancersCommand} from "@aws-sdk/client-elastic-load-balancing-v2"
 
 // stubbed responses below
 import vpcsResponse from "./aws-fixtures/describe-vpcs.json"
@@ -58,6 +59,15 @@ const awsClient = (credentials, onDataReceived) => (
                 credentials: credentials
             });
 
+            const elbClient = new ElasticLoadBalancingV2({
+                region: "eu-west-1",
+                credentials: credentials
+            });
+
+            elbClient
+                .send(new DescribeLoadBalancersCommand({}))
+                .then(console.log)
+
             Promise
                 .all([
                     ec2Client.send(new DescribeVpcsCommand({})),
@@ -68,7 +78,7 @@ const awsClient = (credentials, onDataReceived) => (
                     ec2Client.send(new DescribeNetworkAclsCommand({})),
                     ec2Client.send(new DescribeNetworkInterfacesCommand({})),
                     rdsClient.send(new DescribeDBInstancesCommand({})),
-                    getTheEcs()
+                    getTheEcs(credentials)
                 ])
                 .then(responses => {
                     const [
@@ -122,14 +132,10 @@ const stubbedClient = (onDataReceived) => (
 
 // messing with ECS
 
-function getTheEcs() {
+function getTheEcs(credentials) {
     const client = new ECSClient({
         region: "eu-west-1",
-        credentials: {
-            accessKeyId: "",
-            secretAccessKey: "",
-            sessionToken: ""
-        }
+        credentials: credentials
     });
 
     return client
