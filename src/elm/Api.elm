@@ -2,6 +2,7 @@ module Api exposing (decodeAwsData)
 
 import Api.EcsTasksResponse as EcsTasksResponse exposing (EcsTaskResponse, EcsTasksResponse)
 import Api.InstancesResponse as InstancesResponse exposing (InstanceResponse, InstancesResponse)
+import Api.LoadBalancersResponse as LoadBalancersResponse exposing (LoadBalancerResponse, LoadBalancersResponse)
 import Api.NetworkACLsResponse as NetworkACLsResponse exposing (NetworkACLsResponse)
 import Api.NetworkInterfacesResponse as NetworkInterfacesResponse exposing (NetworkInterfacesResponse)
 import Api.RdsResponse as RdsResponse exposing (RdsResponse, RdsesResponse)
@@ -35,6 +36,7 @@ awsDataDecoder =
         |> Json.key "networkInterfacesResponse" NetworkInterfacesResponse.decoder
         |> Json.key "dbInstancesResponse" RdsResponse.decoder
         |> Json.key "ecsTasksResponse" EcsTasksResponse.decoder
+        |> Json.key "loadBalancersResponse" LoadBalancersResponse.decoder
 
 
 vpcsDecoder : Json.Decoder VpcsResponse
@@ -74,6 +76,7 @@ type alias AwsData =
     , networkInterfaces : NetworkInterfacesResponse
     , databases : RdsesResponse
     , ecsTasks : EcsTasksResponse
+    , loadBalancers : LoadBalancersResponse
     }
 
 
@@ -129,6 +132,7 @@ buildNodes awsData =
     collectInstances awsData
         |> collectDatabases awsData
         |> collectTasks awsData
+        |> collectLoadBalancers awsData
 
 
 collectInstances : AwsData -> Result String (Dict SubnetId (List Node))
@@ -226,6 +230,44 @@ collectTask { securityGroups, routeTables, networkACLs, networkInterfaces } task
                         , routeTable = rt
                         , networkACL = NetworkACLsResponse.find ni.subnetId networkACLs
                         , group = task.group
+                        }
+                )
+                networkInfo
+                routeTable
+    in
+    Result.map3
+        (\ni -> Dict.updateList ni.subnetId)
+        networkInfo
+        task_
+        nodesBySubnet
+
+
+collectLoadBalancers : AwsData -> Result String (Dict String (List Node)) -> Result String (Dict String (List Node))
+collectLoadBalancers awsData otherNodes =
+    List.foldl (collectLoadBalancer awsData) otherNodes awsData.loadBalancers
+
+
+collectLoadBalancer : AwsData -> LoadBalancerResponse -> Result String (Dict String (List Node)) -> Result String (Dict String (List Node))
+collectLoadBalancer { securityGroups, routeTables, networkACLs, networkInterfaces } loadBalancer nodesBySubnet =
+    let
+        networkInfo =
+            NetworkInterfacesResponse.findLoadBalancerInfo loadBalancer networkInterfaces
+
+        routeTable =
+            Result.andThen
+                (\info -> RouteTablesResponse.find info.vpcId info.subnetId routeTables)
+                networkInfo
+
+        task_ =
+            Result.map2
+                (\ni rt ->
+                    Node.buildLoadBalancer
+                        { arn = loadBalancer.arn
+                        , securityGroups = findSecurityGroups ni.securityGroups securityGroups
+                        , privateIp = ni.ip
+                        , routeTable = rt
+                        , networkACL = NetworkACLsResponse.find ni.subnetId networkACLs
+                        , publiclyAccessible = loadBalancer.publiclyAccessible
                         }
                 )
                 networkInfo

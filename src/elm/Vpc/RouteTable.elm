@@ -28,6 +28,7 @@ type alias RouteTable_ =
 type Route
     = Local
     | InternetGateway
+    | NatGateway
 
 
 
@@ -71,6 +72,7 @@ routeTypeDecoder =
     Json.oneOf
         [ localRouteDecoder
         , internetGatewayRouteDecoder
+        , natGatewayRouteDecoder
         ]
 
 
@@ -98,6 +100,19 @@ internetGatewayRouteDecoder =
 
                 else
                     Json.fail "could not decode internet gateway route"
+            )
+
+
+natGatewayRouteDecoder : Json.Decoder Route
+natGatewayRouteDecoder =
+    Json.field "NatGatewayId" Json.string
+        |> Json.andThen
+            (\natId ->
+                if String.contains "nat-" natId then
+                    Json.succeed NatGateway
+
+                else
+                    Json.fail "could not decode nat gateway route"
             )
 
 

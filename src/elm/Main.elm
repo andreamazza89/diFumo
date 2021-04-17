@@ -52,6 +52,7 @@ type Msg
     | ReceivedVpcs (Result String (List Vpc))
     | AccessKeyIdTyped String
     | SecretAccessKeyTyped String
+    | SessionTokenTyped String
     | SubmitCredentialsClicked
     | Refresh
 
@@ -102,6 +103,9 @@ update msg model =
 
         SecretAccessKeyTyped accessKey ->
             ( updateSecretAccessKey accessKey model, Cmd.none )
+
+        SessionTokenTyped token ->
+            ( updateSessionToken token model, Cmd.none )
 
         SubmitCredentialsClicked ->
             ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
@@ -178,6 +182,19 @@ updateSecretAccessKey key model =
             Loaded loaded creds
 
 
+updateSessionToken : String -> Model -> Model
+updateSessionToken token model =
+    case model of
+        Loading creds ->
+            Loading creds
+
+        WaitingForCredentials creds ->
+            WaitingForCredentials { creds | sessionToken = token }
+
+        Loaded loaded creds ->
+            Loaded loaded creds
+
+
 credentials : Model -> AwsCredentials
 credentials model =
     case model of
@@ -232,6 +249,12 @@ theWorld model =
                     , text = creds.secretAccessKey
                     , placeholder = Nothing
                     , label = Input.labelAbove [] (text "Secret Access key")
+                    }
+                , Input.text []
+                    { onChange = SessionTokenTyped
+                    , text = creds.sessionToken
+                    , placeholder = Nothing
+                    , label = Input.labelAbove [] (text "Session token")
                     }
                 , Input.button []
                     { onPress = Just SubmitCredentialsClicked

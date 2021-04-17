@@ -2,6 +2,7 @@ module Api.NetworkInterfacesResponse exposing
     ( NetworkInterfacesResponse
     , decoder
     , findForAddress
+    , findLoadBalancerInfo
     , findRdsInfo
     )
 
@@ -47,6 +48,23 @@ findRdsInfo { vpcId, subnetIds, securityGroups } =
         >> List.filter (.instanceOwnerId >> (==) "amazon-rds")
         >> List.head
         >> Result.fromMaybe "Could not find networkInfo for Rds"
+
+
+findLoadBalancerInfo :
+    { a
+        | vpcId : String
+        , subnetId : String
+        , securityGroups : List String
+    }
+    -> NetworkInterfacesResponse
+    -> Result String NetworkInterfaceResponse
+findLoadBalancerInfo { vpcId, subnetId, securityGroups } =
+    List.filter (.vpcId >> (==) vpcId)
+        >> List.filter (.subnetId >> (==) subnetId)
+        >> List.filter (.securityGroups >> (==) securityGroups)
+        >> List.filter (.instanceOwnerId >> (==) "amazon-elb")
+        >> List.head
+        >> Result.fromMaybe "Could not find networkInfo for loadBalancer"
 
 
 findForAddress : Ipv4Address -> NetworkInterfacesResponse -> Result String NetworkInterfaceResponse

@@ -4,6 +4,7 @@ module IpAddress exposing
     , isBetween
     , madeUpV4
     , plus
+    , toDecimalString
     , v4Decoder
     , v4FromInt
     , v4FromString
@@ -82,6 +83,11 @@ numberIsWithinRange n =
 isBetween : Ipv4Address -> Ipv4Address -> Ipv4Address -> Bool
 isBetween (Ipv4Address lower) (Ipv4Address upper) (Ipv4Address address) =
     address >= lower && address <= upper
+
+
+toDecimalString : Ipv4Address -> String
+toDecimalString (Ipv4Address address) =
+    String.fromInt address
 
 
 

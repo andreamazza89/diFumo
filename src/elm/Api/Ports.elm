@@ -11,6 +11,7 @@ import Json.Decode as Json
 type alias AwsCredentials =
     { accessKeyId : String
     , secretAccessKey : String
+    , sessionToken : String
     }
 
 
@@ -18,6 +19,7 @@ emptyCredentials : AwsCredentials
 emptyCredentials =
     { accessKeyId = ""
     , secretAccessKey = ""
+    , sessionToken = ""
     }
 
 

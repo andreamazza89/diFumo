@@ -7,6 +7,7 @@ module Node exposing
     , allowsIngress
     , buildEc2
     , buildEcsTask
+    , buildLoadBalancer
     , buildRds
     , canAccessInternet
     , equals
@@ -19,6 +20,7 @@ module Node exposing
 import IpAddress exposing (Ipv4Address)
 import Node.Ec2 as Ec2 exposing (Ec2)
 import Node.EcsTask as EcsTask exposing (EcsTask)
+import Node.LoadBalancer as LoadBalancer exposing (LoadBalancer)
 import Node.Rds as Rds exposing (Rds)
 import Port exposing (Port)
 import Protocol exposing (Protocol)
@@ -45,6 +47,7 @@ type VpcNode
     = Ec2 Ec2
     | Rds Rds
     | EcsTask EcsTask
+    | LoadBalancer LoadBalancer
 
 
 type alias Node_ =
@@ -94,6 +97,9 @@ vpcNodeEquals node otherNode =
         ( EcsTask ecs, EcsTask otherEcs ) ->
             EcsTask.equals ecs otherEcs
 
+        ( LoadBalancer lb, LoadBalancer otherLb ) ->
+            LoadBalancer.equals lb otherLb
+
         ( _, _ ) ->
             False
 
@@ -123,6 +129,9 @@ idAsString node_ =
 
         Vpc _ (EcsTask ecs) ->
             EcsTask.idAsString ecs
+
+        Vpc _ (LoadBalancer lb) ->
+            LoadBalancer.idAsString lb
 
 
 allowsEgress : Node -> Node -> Protocol -> Port -> Bool
@@ -227,6 +236,9 @@ vpcNodeCanAccessInternet node =
         EcsTask ecsTask ->
             EcsTask.canAccessInternet ecsTask
 
+        LoadBalancer loadBalancer ->
+            LoadBalancer.canAccessInternet loadBalancer
+
 
 
 -- Builders
@@ -254,6 +266,11 @@ buildRds config =
 buildEcsTask : Config (EcsTask.Config a) -> Node
 buildEcsTask config =
     Vpc (buildVpcNode config) (EcsTask (EcsTask.build config))
+
+
+buildLoadBalancer : Config (LoadBalancer.Config a) -> Node
+buildLoadBalancer config =
+    Vpc (buildVpcNode config) (LoadBalancer (LoadBalancer.build config))
 
 
 buildVpcNode : Config a -> Node_

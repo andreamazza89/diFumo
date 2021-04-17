@@ -23,6 +23,7 @@ import networkACLsResponse from "./aws-fixtures/describe-network-acls.json"
 import networkInterfacesResponse from "./aws-fixtures/describe-network-interfaces.json"
 import dbInstancesResponse from "./aws-fixtures/describe-db-instances.json"
 import ecsTasksResponse from "./aws-fixtures/describe-ecs-tasks.json"
+import loadBalancersResponse from "./aws-fixtures/describe-load-balancers.json"
 
 
 const environment = process.env.NODE_ENV
@@ -64,10 +65,6 @@ const awsClient = (credentials, onDataReceived) => (
                 credentials: credentials
             });
 
-            elbClient
-                .send(new DescribeLoadBalancersCommand({}))
-                .then(console.log)
-
             Promise
                 .all([
                     ec2Client.send(new DescribeVpcsCommand({})),
@@ -78,7 +75,8 @@ const awsClient = (credentials, onDataReceived) => (
                     ec2Client.send(new DescribeNetworkAclsCommand({})),
                     ec2Client.send(new DescribeNetworkInterfacesCommand({})),
                     rdsClient.send(new DescribeDBInstancesCommand({})),
-                    getTheEcs(credentials)
+                    getTheEcs(credentials),
+                    elbClient.send(new DescribeLoadBalancersCommand({})),
                 ])
                 .then(responses => {
                     const [
@@ -90,7 +88,8 @@ const awsClient = (credentials, onDataReceived) => (
                         networkACLs,
                         networkInterfaces,
                         dbInstances,
-                        ecsTasks
+                        ecsTasks,
+                        loadBalancers,
                     ] = responses
 
                     const awsData = {
@@ -102,8 +101,10 @@ const awsClient = (credentials, onDataReceived) => (
                         networkACLsResponse: networkACLs.NetworkAcls,
                         networkInterfacesResponse: networkInterfaces.NetworkInterfaces,
                         dbInstancesResponse: dbInstances.DBInstances,
-                        ecsTasksResponse: ecsTasks.Tasks
+                        ecsTasksResponse: ecsTasks.Tasks,
+                        loadBalancersResponse: loadBalancers.LoadBalancers,
                     }
+                    console.log(awsData)
                     onDataReceived(awsData)
                 })
         }
@@ -123,6 +124,7 @@ const stubbedClient = (onDataReceived) => (
                 networkInterfacesResponse: networkInterfacesResponse.NetworkInterfaces,
                 dbInstancesResponse: dbInstancesResponse.DBInstances,
                 ecsTasksResponse: ecsTasksResponse.Tasks,
+                loadBalancersResponse: loadBalancersResponse.LoadBalancers,
             }
             onDataReceived(awsData)
         }
