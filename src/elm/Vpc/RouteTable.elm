@@ -52,19 +52,32 @@ hasRouteTo_ address ( cidr, _ ) =
 decoder : Json.Decoder RouteTable
 decoder =
     Json.field "Routes" routesDecoder
+        |> Json.map (List.filterMap Basics.identity)
         |> Json.map build
 
 
-routesDecoder : Json.Decoder (List ( Cidr, Route ))
+routesDecoder : Json.Decoder (List (Maybe ( Cidr, Route )))
 routesDecoder =
-    Json.list routeDecoder
+    Json.list
+        (Json.oneOf
+            [ routeDecoder
+            , ignoreUntilWeSupportPrefixLists
+            ]
+        )
 
 
-routeDecoder : Json.Decoder ( Cidr, Route )
+ignoreUntilWeSupportPrefixLists : Json.Decoder (Maybe ( Cidr, Route ))
+ignoreUntilWeSupportPrefixLists =
+    -- this is just to ignore routes that have prefix lists as destination until we support that kind of thing
+    Json.succeed Nothing
+
+
+routeDecoder : Json.Decoder (Maybe ( Cidr, Route ))
 routeDecoder =
     Json.map2 Tuple.pair
         (Json.field "DestinationCidrBlock" Cidr.decoder)
         routeTypeDecoder
+        |> Json.map Just
 
 
 routeTypeDecoder : Json.Decoder Route
