@@ -62,7 +62,7 @@ findLoadBalancerInfo { vpcId, subnetId, securityGroups } =
     List.filter (.vpcId >> (==) vpcId)
         >> List.filter (.subnetId >> (==) subnetId)
         >> List.filter (.securityGroups >> (==) securityGroups)
-        >> List.filter (.instanceOwnerId >> (==) "amazon-elb")
+        >> List.filter (\ni -> ni.instanceOwnerId == "amazon-elb" || ni.instanceOwnerId == "amazon-aws")
         >> List.head
         >> Result.fromMaybe "Could not find networkInfo for loadBalancer"
 

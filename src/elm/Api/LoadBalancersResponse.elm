@@ -5,6 +5,7 @@ module Api.LoadBalancersResponse exposing
     )
 
 import Json.Decode as Json
+import Utils.Json as Json
 
 
 type alias LoadBalancersResponse =
@@ -43,14 +44,34 @@ buildThem =
         (\subnetId ->
             Json.map6 LoadBalancerResponse
                 (Json.succeed subnetId)
-                (Json.field "SecurityGroups" (Json.list Json.string))
+                securityGroupIdsDecoder
                 (Json.field "VpcId" Json.string)
                 (Json.field "LoadBalancerArn" Json.string)
                 decodeScheme
-                -- FIX THIS TO NOT BE CANNED
                 (Json.field "LoadBalancerName" Json.string)
         )
-        >> sequence
+        >> Json.sequence
+
+
+securityGroupIdsDecoder : Json.Decoder (List String)
+securityGroupIdsDecoder =
+    Json.oneOf
+        [ Json.field "SecurityGroups" (Json.list Json.string)
+        , emptySecurityGroupsForNetworkBalancer
+        ]
+
+
+emptySecurityGroupsForNetworkBalancer : Json.Decoder (List String)
+emptySecurityGroupsForNetworkBalancer =
+    Json.field "Type" Json.string
+        |> Json.andThen
+            (\loadBalancerType ->
+                if loadBalancerType == "network" then
+                    Json.succeed []
+
+                else
+                    Json.fail "load balancer type is not network"
+            )
 
 
 decodeScheme : Json.Decoder Bool
@@ -62,13 +83,3 @@ decodeScheme =
 isPubliclyAccessible : String -> Json.Decoder Bool
 isPubliclyAccessible =
     (==) "internet-facing" >> Json.succeed
-
-
-sequence : List (Json.Decoder a) -> Json.Decoder (List a)
-sequence decoders =
-    List.foldl collect (Json.succeed []) decoders
-
-
-collect : Json.Decoder a -> Json.Decoder (List a) -> Json.Decoder (List a)
-collect item acc =
-    Json.andThen (\i -> Json.map ((::) i) acc) item
