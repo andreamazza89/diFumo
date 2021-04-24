@@ -3,10 +3,11 @@ module Vpc exposing
     , Vpc
     , build
     , idAsString
+    , privateSubnets
     , subnets
     )
 
-import Vpc.Subnet exposing (Subnet)
+import Vpc.Subnet as Subnet exposing (Subnet)
 
 
 
@@ -31,6 +32,11 @@ type Id
 subnets : Vpc -> List Subnet
 subnets (Vpc vpc_) =
     vpc_.subnets
+
+
+privateSubnets : Vpc -> List Subnet
+privateSubnets (Vpc vpc_) =
+    List.filter (Subnet.isPublic >> not) vpc_.subnets
 
 
 idAsString : Vpc -> String

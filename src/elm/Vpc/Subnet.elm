@@ -3,6 +3,7 @@ module Vpc.Subnet exposing
     , Subnet
     , build
     , idAsString
+    , isPublic
     , nodes
     )
 
@@ -22,6 +23,10 @@ type Id
     = Id String
 
 
+
+-- Query
+
+
 nodes : Subnet -> List Node
 nodes (Subnet subnet_) =
     subnet_.nodes
@@ -32,6 +37,11 @@ idAsString (Subnet { id }) =
     case id of
         Id id_ ->
             id_
+
+
+isPublic : Subnet -> Bool
+isPublic subnet =
+    False
 
 
 

@@ -12,16 +12,18 @@ import Json.Decode as Json
 import Node exposing (Node)
 import Utils.Dict as Dict
 import Utils.Json as Json
+import Utils.NonEmptyList as NonEmptyList exposing (NonEmptyList)
 import Vpc exposing (Vpc)
 import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
 
-decodeAwsData : Json.Value -> Result String (List Vpc)
+decodeAwsData : Json.Value -> Result String (NonEmptyList Vpc)
 decodeAwsData =
     Json.decodeValue awsDataDecoder
         >> Result.mapError Json.errorToString
         >> Result.andThen buildVpcs
+        >> Result.andThen NonEmptyList.fromList
 
 
 awsDataDecoder : Json.Decoder AwsData

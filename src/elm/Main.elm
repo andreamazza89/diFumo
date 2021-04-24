@@ -7,11 +7,16 @@ import Connectivity
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Colors as Colors
 import Element.Events exposing (onClick)
+import Element.Icon.Server as Server
 import Element.Input as Input
+import Element.Scale as Scale exposing (edges)
+import Element.Text as Text
 import Node exposing (Node)
 import Port exposing (Port)
 import Protocol
+import Utils.NonEmptyList as NonEmptyList exposing (NonEmptyList)
 import Vpc exposing (Vpc)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
@@ -33,7 +38,8 @@ type Model
 
 
 type alias Loaded_ =
-    { vpcs : List Vpc
+    { otherVpcs : List Vpc
+    , vpcSelected : Vpc
     , pathSelection : PathSelection
     }
 
@@ -48,13 +54,12 @@ type Msg
     = NodeClicked Node
     | PortTyped Port
     | NoOp
-    | VpcsLoaded (Result String (List Vpc))
-    | ReceivedVpcs (Result String (List Vpc))
+    | ReceivedVpcs (Result String (NonEmptyList Vpc))
+    | SubmitCredentialsClicked
+    | RefreshClicked
     | AccessKeyIdTyped String
     | SecretAccessKeyTyped String
     | SessionTokenTyped String
-    | SubmitCredentialsClicked
-    | Refresh
 
 
 init : () -> ( Model, Cmd msg )
@@ -69,7 +74,7 @@ subscriptions _ =
 
 view : Model -> Document Msg
 view model =
-    { body = [ Element.layout [ padding 5 ] (theWorld model) ]
+    { body = [ Element.layout [] (theWorld model) ]
     , title = "DiFumo"
     }
 
@@ -86,17 +91,24 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        VpcsLoaded (Ok vpcs) ->
-            ( Loaded { vpcs = vpcs, pathSelection = NothingSelected } (credentials model), Cmd.none )
-
-        VpcsLoaded (Err _) ->
-            ( model, Cmd.none )
-
         ReceivedVpcs (Ok vpcs) ->
-            ( Loaded { vpcs = vpcs, pathSelection = NothingSelected } (credentials model), Cmd.none )
+            ( Loaded
+                { vpcSelected = NonEmptyList.head vpcs
+                , otherVpcs = NonEmptyList.tail vpcs
+                , pathSelection = NothingSelected
+                }
+                (credentials model)
+            , Cmd.none
+            )
 
         ReceivedVpcs (Err _) ->
             ( model, Cmd.none )
+
+        SubmitCredentialsClicked ->
+            ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
+
+        RefreshClicked ->
+            ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
 
         AccessKeyIdTyped id ->
             ( updateAccessKeyId id model, Cmd.none )
@@ -106,12 +118,6 @@ update msg model =
 
         SessionTokenTyped token ->
             ( updateSessionToken token model, Cmd.none )
-
-        SubmitCredentialsClicked ->
-            ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
-
-        Refresh ->
-            ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
 
 
 updateSelection : Node -> Model -> Model
@@ -233,7 +239,10 @@ theWorld : Model -> Element Msg
 theWorld model =
     case model of
         Loading _ ->
-            column [] [ Element.text "Loading...", refreshButton ]
+            column
+                [ width fill
+                ]
+                [ Element.text "Loading...", refreshButton ]
 
         WaitingForCredentials creds ->
             column [ width fill, spacing 30, padding 20 ]
@@ -263,51 +272,184 @@ theWorld model =
                 ]
 
         Loaded loaded _ ->
-            case loaded.pathSelection of
-                NothingSelected ->
-                    column [ width fill, height fill, spacing 30 ]
-                        [ refreshButton
-                        , row
-                            [ width fill
-                            , height fill
-                            , spacing 10
-                            ]
-                            [ viewVpcs loaded
-                            , internetNode loaded
-                            ]
-                        ]
+            loadedView loaded
 
-                SourceNode _ ->
-                    column [ width fill, height fill, spacing 30 ]
-                        [ refreshButton
-                        , row
-                            [ width fill
-                            , height fill
-                            , spacing 10
-                            ]
-                            [ viewVpcs loaded
-                            , internetNode loaded
-                            ]
-                        ]
 
-                Path path forPort ->
-                    column [ width fill, height fill, spacing 30 ]
-                        [ refreshButton
-                        , row
-                            [ width fill
-                            , height fill
-                            , spacing 10
-                            ]
-                            [ viewVpcs loaded
-                            , internetNode loaded
-                            ]
-                        , showConnectionInfo path forPort model
-                        ]
+loadedView : Loaded_ -> Element Msg
+loadedView loaded =
+    column [ width fill, height fill ]
+        [ topBar
+        , row
+            [ width fill
+            , padding Scale.large
+            ]
+            [ subnets loaded.vpcSelected, connections ]
+        ]
+
+
+subnets vpc =
+    row [ width (fillPortion 7) ] [ privateSubnets vpc, publicSubnets ]
+
+
+privateSubnets vpc =
+    column [ width fill, height fill, spacing Scale.medium ]
+        [ subnetsHeader "Private subnets"
+        , viewSubnets2 (Vpc.privateSubnets vpc)
+        ]
+
+
+viewSubnets2 =
+    List.map viewSubnet2
+        >> column
+            [ width fill
+            , spacing Scale.medium
+            ]
+
+
+viewSubnet2 subnet =
+    el
+        [ width fill
+        , Border.width 1
+        , Border.rounded 10
+        , Background.color Colors.lightGrey
+        ]
+        (column [ width fill, height (fill |> minimum 60) ]
+            [ viewNodes2 (Subnet.nodes subnet)
+            , subnetName
+            ]
+        )
+
+
+viewNodes2 : List b -> Element msg
+viewNodes2 =
+    List.map viewNode2
+        >> wrappedRow
+            [ padding Scale.verySmall
+            , height fill
+            ]
+
+
+viewNode2 node =
+    column
+        [ Border.width 1
+        , Border.rounded 5
+        , padding Scale.verySmall
+        , width (px Scale.veryLarge)
+        , height (px Scale.veryLarge)
+        , Background.color Colors.white
+        ]
+        [ Text.smallText [ centerX ] "EC2"
+        , el [ centerX, centerY ] Server.icon
+        , Text.smallText [ centerX, alignBottom ] "my first i..."
+        ]
+
+
+subnetName =
+    el
+        [ width fill
+        , Border.widthEach { edges | top = 1 }
+        ]
+        (Text.text [ alignRight, padding Scale.verySmall ] "subnet ABC")
+
+
+subnetsHeader : String -> Element msg
+subnetsHeader =
+    Text.header
+        [ alignTop
+        , centerX
+        , Border.widthEach { edges | bottom = 2 }
+        , Border.dashed
+        , padding Scale.medium
+        ]
+
+
+publicSubnets : Element msg
+publicSubnets =
+    column [ width fill, height fill ] [ subnetsHeader "Public subnets" ]
+
+
+connections =
+    column [ width (fillPortion 2), centerX, spacing Scale.large ] [ internet, connectivityPanel ]
+
+
+internet =
+    el [] (text "internet node")
+
+
+connectivityPanel =
+    el [] (text "connectivity panel")
+
+
+
+--case loaded.pathSelection of
+--    NothingSelected ->
+--        column [ width fill, height fill, spacing 30 ]
+--            [ topBar
+--            , row
+--                [ width fill
+--                , height fill
+--                , spacing 10
+--                ]
+--                [ viewVpcs loaded
+--                , internetNode loaded
+--                ]
+--            ]
+--
+--    SourceNode _ ->
+--        column [ width fill, height fill, spacing 30 ]
+--            [ topBar
+--            , row
+--                [ width fill
+--                , height fill
+--                , spacing 10
+--                ]
+--                [ viewVpcs loaded
+--                , internetNode loaded
+--                ]
+--            ]
+--
+--    Path path forPort ->
+--        column [ width fill, height fill, spacing 30 ]
+--            [ topBar
+--            , row
+--                [ width fill
+--                , height fill
+--                , spacing 10
+--                ]
+--                [ viewVpcs loaded
+--                , internetNode loaded
+--                ]
+--            , showConnectionInfo path forPort model
+--            ]
+
+
+topBar : Element Msg
+topBar =
+    row
+        [ width fill
+        , Background.color Colors.darkGrey
+        , padding Scale.large
+        , spacing Scale.large
+        ]
+        [ refreshButton
+        , selectVpc
+        , selectRegion
+        ]
 
 
 refreshButton : Element Msg
 refreshButton =
-    Input.button [] { onPress = Just Refresh, label = text "Refresh" }
+    Input.button [] { onPress = Just RefreshClicked, label = text "Refresh" }
+
+
+selectVpc : Element msg
+selectVpc =
+    text "vpc selection"
+
+
+selectRegion : Element msg
+selectRegion =
+    text "region selection"
 
 
 showConnectionInfo : { a | from : Node, to : Node } -> Port -> Model -> Element Msg
@@ -401,7 +543,7 @@ internetNode model =
 
 viewVpcs : Loaded_ -> Element Msg
 viewVpcs model =
-    List.map (viewVpc model) model.vpcs
+    List.map (viewVpc model) model.otherVpcs
         |> column [ width fill, height fill ]
 
 
