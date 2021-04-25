@@ -10,12 +10,14 @@ module Vpc.Subnet exposing
 -- Subnet
 
 import Node exposing (Node)
+import Vpc.RouteTable as RouteTable exposing (RouteTable)
 
 
 type Subnet
     = Subnet
         { nodes : List Node
         , id : Id
+        , routeTable : RouteTable
         }
 
 
@@ -40,14 +42,18 @@ idAsString (Subnet { id }) =
 
 
 isPublic : Subnet -> Bool
-isPublic subnet =
-    False
+isPublic (Subnet { routeTable }) =
+    RouteTable.isPublic routeTable
 
 
 
 -- Builder
 
 
-build : String -> List Node -> Subnet
-build id nodes_ =
-    Subnet { id = Id id, nodes = nodes_ }
+build : String -> List Node -> RouteTable -> Subnet
+build id nodes_ routeTable =
+    Subnet
+        { id = Id id
+        , nodes = nodes_
+        , routeTable = routeTable
+        }

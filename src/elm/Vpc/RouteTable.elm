@@ -5,6 +5,7 @@ module Vpc.RouteTable exposing
     , decoder
     , hasRouteTo
     , internetGateway
+    , isPublic
     )
 
 import Cidr exposing (Cidr)
@@ -43,6 +44,13 @@ hasRouteTo toV4Address (RouteTable { routes }) =
 hasRouteTo_ : Ipv4Address -> ( Cidr, b ) -> Bool
 hasRouteTo_ address ( cidr, _ ) =
     Cidr.contains address cidr
+
+
+isPublic : RouteTable -> Bool
+isPublic (RouteTable { routes }) =
+    List.filter (Tuple.second >> (==) InternetGateway) routes
+        |> List.isEmpty
+        |> not
 
 
 

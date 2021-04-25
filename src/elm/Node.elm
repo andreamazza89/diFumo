@@ -1,6 +1,7 @@
 module Node exposing
     ( Config
     , Node
+    , NodeType(..)
     , aclAllowsEgress
     , aclAllowsIngress
     , allowsEgress
@@ -15,6 +16,9 @@ module Node exposing
     , idAsString
     , internet
     , isInternet
+    , label
+    , name
+    , tipe
     )
 
 import IpAddress exposing (Ipv4Address)
@@ -58,8 +62,82 @@ type alias Node_ =
     }
 
 
+type NodeType
+    = InternetNode
+    | Ec2Node
+    | RdsNode
+    | EcsTaskNode
+    | LoadBalancerNode
+
+
 
 -- Query
+
+
+tipe : Node -> NodeType
+tipe node =
+    case node of
+        Internet ->
+            InternetNode
+
+        Vpc _ vpcNode ->
+            case vpcNode of
+                Ec2 _ ->
+                    Ec2Node
+
+                Rds _ ->
+                    RdsNode
+
+                EcsTask _ ->
+                    EcsTaskNode
+
+                LoadBalancer _ ->
+                    LoadBalancerNode
+
+
+name : Node -> String
+name node =
+    case node of
+        Internet ->
+            "Internet"
+
+        Vpc _ vpcNode ->
+            vpcNodeName vpcNode
+
+
+vpcNodeName : VpcNode -> String
+vpcNodeName vpcNode =
+    case vpcNode of
+        Ec2 ec2 ->
+            Ec2.name ec2
+
+        Rds rds ->
+            Rds.name rds
+
+        EcsTask ecsTask ->
+            EcsTask.name ecsTask
+
+        LoadBalancer loadBalancer ->
+            LoadBalancer.name loadBalancer
+
+
+label : Node -> String
+label node =
+    case tipe node of
+        InternetNode ->
+            "INTERNET"
+
+        Ec2Node ->
+            "EC2"
+
+        RdsNode ->
+            "RDS"
+
+        EcsTaskNode ->
+            "ECS"
+
+        LoadBalancerNode ->
+            "LB"
 
 
 isInternet : Node -> Bool

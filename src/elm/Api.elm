@@ -115,7 +115,7 @@ type alias VpcId =
 buildVpcs : AwsData -> Result String (List Vpc)
 buildVpcs ({ vpcs, subnets, securityGroups, instances, routeTables } as awsData) =
     buildNodes awsData
-        |> Result.map (buildSubnets subnets)
+        |> Result.andThen (buildSubnets routeTables subnets)
         |> Result.map (buildVpcs_ vpcs)
 
 
@@ -158,6 +158,7 @@ collectInstance { securityGroups, routeTables, networkACLs } instance nodesBySub
                         , routeTable = rt
                         , publicIp = instance.publicIp
                         , networkACL = NetworkACLsResponse.find instance.subnetId networkACLs
+                        , tags = instance.tags
                         }
                 )
                 routeTable
@@ -194,6 +195,7 @@ collectDatabase { securityGroups, routeTables, networkACLs, networkInterfaces } 
                         , routeTable = rt
                         , isPubliclyAccessible = database.isPubliclyAccessible
                         , networkACL = NetworkACLsResponse.find ni.subnetId networkACLs
+                        , name = database.name
                         }
                 )
                 routeTable
@@ -270,6 +272,7 @@ collectLoadBalancer { securityGroups, routeTables, networkACLs, networkInterface
                         , routeTable = rt
                         , networkACL = NetworkACLsResponse.find ni.subnetId networkACLs
                         , publiclyAccessible = loadBalancer.publiclyAccessible
+                        , name = loadBalancer.name
                         }
                 )
                 networkInfo
@@ -282,22 +285,30 @@ collectLoadBalancer { securityGroups, routeTables, networkACLs, networkInterface
         nodesBySubnet
 
 
-buildSubnets : SubnetsResponse -> Dict SubnetId (List Node) -> Dict VpcId (List Subnet)
-buildSubnets subnets nodesBySubnet =
-    List.foldl (collectSubnet nodesBySubnet) Dict.empty subnets
+buildSubnets : RouteTablesResponse -> SubnetsResponse -> Dict SubnetId (List Node) -> Result String (Dict VpcId (List Subnet))
+buildSubnets routeTables subnets nodesBySubnet =
+    List.foldl (collectSubnet routeTables nodesBySubnet) (Ok Dict.empty) subnets
 
 
-collectSubnet : Dict String (List Node) -> SubnetResponse -> Dict VpcId (List Subnet) -> Dict VpcId (List Subnet)
-collectSubnet nodesBySubnet subnetResponse subnetsByVpc =
+collectSubnet : RouteTablesResponse -> Dict String (List Node) -> SubnetResponse -> Result String (Dict VpcId (List Subnet)) -> Result String (Dict VpcId (List Subnet))
+collectSubnet routeTables nodesBySubnet subnetResponse subnetsByVpc =
     let
         nodes =
             Dict.get subnetResponse.id nodesBySubnet
                 |> Maybe.withDefault []
 
+        routeTable =
+            RouteTablesResponse.find subnetResponse.vpcId subnetResponse.id routeTables
+
         subnet =
-            Subnet.build subnetResponse.id nodes
+            Result.map (Subnet.build subnetResponse.id nodes) routeTable
     in
-    Dict.updateList subnetResponse.vpcId subnet subnetsByVpc
+    Result.map2
+        (\s ss ->
+            Dict.updateList subnetResponse.vpcId s ss
+        )
+        subnet
+        subnetsByVpc
 
 
 findSecurityGroups : List String -> List SecurityGroup -> List SecurityGroup

@@ -22,7 +22,6 @@ import Vpc.SecurityGroup exposing (SecurityGroup)
 -- Ec2 Fixture
 
 
-builder : Ec2.Config Node.Config
 builder =
     { id = "some-id"
     , securityGroups = []
@@ -33,31 +32,31 @@ builder =
     }
 
 
-withGroup : SecurityGroup -> Ec2.Config Node.Config -> Ec2.Config Node.Config
-withGroup group builder =
-    { builder | securityGroups = group :: builder.securityGroups }
+withGroup : SecurityGroup -> Node.Config (Ec2.Config a) -> Node.Config (Ec2.Config a)
+withGroup group builder_ =
+    { builder_ | securityGroups = group :: builder_.securityGroups }
 
 
-withTable : RouteTable -> Ec2.Config Node.Config -> Ec2.Config Node.Config
-withTable table builder =
-    { builder | routeTable = table }
+withTable : RouteTable -> Node.Config (Ec2.Config a) -> Node.Config (Ec2.Config a)
+withTable table builder_ =
+    { builder_ | routeTable = table }
 
 
-withNetworkACL : NetworkACL -> Ec2.Config Node.Config -> Ec2.Config Node.Config
-withNetworkACL acl builder =
-    { builder | networkACL = acl }
+withNetworkACL : NetworkACL -> Node.Config (Ec2.Config a) -> Node.Config (Ec2.Config a)
+withNetworkACL acl builder_ =
+    { builder_ | networkACL = acl }
 
 
-withNoPublicIp : Ec2.Config Node.Config -> Ec2.Config Node.Config
-withNoPublicIp builder =
-    { builder | publicIp = Nothing }
+withNoPublicIp : Node.Config (Ec2.Config a) -> Node.Config (Ec2.Config a)
+withNoPublicIp builder_ =
+    { builder_ | publicIp = Nothing }
 
 
-withPublicIp : Ec2.Config Node.Config -> Ec2.Config Node.Config
-withPublicIp builder =
-    { builder | publicIp = Just IpAddress.madeUpV4 }
+withPublicIp : Node.Config (Ec2.Config a) -> Node.Config (Ec2.Config a)
+withPublicIp builder_ =
+    { builder_ | publicIp = Just IpAddress.madeUpV4 }
 
 
-toNode : Ec2.Config Node.Config -> Node
-toNode builder =
-    Node.buildEc2 builder
+toNode : Node.Config (Ec2.Config a) -> Node
+toNode builder_ =
+    Node.buildEc2 builder_

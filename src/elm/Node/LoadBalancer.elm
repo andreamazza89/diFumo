@@ -1,4 +1,4 @@
-module Node.LoadBalancer exposing (Config, LoadBalancer, build, canAccessInternet, equals, idAsString)
+module Node.LoadBalancer exposing (Config, LoadBalancer, build, canAccessInternet, equals, idAsString, name)
 
 import IpAddress exposing (Ipv4Address)
 
@@ -7,11 +7,17 @@ type LoadBalancer
     = LoadBalancer
         { id : LoadBalancerId
         , publiclyAccessible : Bool
+        , name : String
         }
 
 
 type LoadBalancerId
     = LoadBalancerId String
+
+
+name : LoadBalancer -> String
+name (LoadBalancer lb) =
+    lb.name
 
 
 idAsString : LoadBalancer -> String
@@ -41,6 +47,7 @@ type alias Config a =
         | arn : String
         , privateIp : Ipv4Address
         , publiclyAccessible : Bool
+        , name : String
     }
 
 
@@ -49,4 +56,5 @@ build config =
     LoadBalancer
         { id = LoadBalancerId (config.arn ++ IpAddress.toDecimalString config.privateIp)
         , publiclyAccessible = config.publiclyAccessible
+        , name = config.name
         }

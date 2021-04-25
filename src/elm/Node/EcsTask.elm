@@ -12,6 +12,11 @@ type EcsTaskId
     = EcsTaskId String
 
 
+name : EcsTask -> String
+name (EcsTask ecs) =
+    String.replace "service:" "" ecs.group
+
+
 id : EcsTask -> EcsTaskId
 id (EcsTask ecs) =
     ecs.id

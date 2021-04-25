@@ -9,10 +9,14 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Colors as Colors
 import Element.Events exposing (onClick)
+import Element.Font as Font
+import Element.Icon.Database as Database
+import Element.Icon.LoadBalancer as LoadBalancer
 import Element.Icon.Server as Server
 import Element.Input as Input
 import Element.Scale as Scale exposing (edges)
 import Element.Text as Text
+import Html.Attributes
 import Node exposing (Node)
 import Port exposing (Port)
 import Protocol
@@ -281,14 +285,16 @@ loadedView loaded =
         [ topBar
         , row
             [ width fill
-            , padding Scale.large
+            , padding Scale.medium
             ]
-            [ subnets loaded.vpcSelected, connections ]
+            [ subnets loaded.vpcSelected
+            , connections
+            ]
         ]
 
 
 subnets vpc =
-    row [ width (fillPortion 7) ] [ privateSubnets vpc, publicSubnets ]
+    row [ width (fillPortion 7), spacing Scale.medium ] [ privateSubnets vpc, publicSubnets vpc ]
 
 
 privateSubnets vpc =
@@ -307,28 +313,28 @@ viewSubnets2 =
 
 
 viewSubnet2 subnet =
-    el
+    column
         [ width fill
         , Border.width 1
         , Border.rounded 10
         , Background.color Colors.lightGrey
         ]
-        (column [ width fill, height (fill |> minimum 60) ]
-            [ viewNodes2 (Subnet.nodes subnet)
-            , subnetName
-            ]
-        )
+        [ viewNodes2 (Subnet.nodes subnet)
+        , subnetName
+        ]
 
 
-viewNodes2 : List b -> Element msg
+viewNodes2 : List Node -> Element msg
 viewNodes2 =
     List.map viewNode2
         >> wrappedRow
-            [ padding Scale.verySmall
+            [ spacing Scale.small
             , height fill
+            , padding Scale.small
             ]
 
 
+viewNode2 : Node -> Element msg
 viewNode2 node =
     column
         [ Border.width 1
@@ -337,11 +343,52 @@ viewNode2 node =
         , width (px Scale.veryLarge)
         , height (px Scale.veryLarge)
         , Background.color Colors.white
+        , htmlAttribute (Html.Attributes.class "node")
         ]
-        [ Text.smallText [ centerX ] "EC2"
-        , el [ centerX, centerY ] Server.icon
-        , Text.smallText [ centerX, alignBottom ] "my first i..."
+        [ nodeLabel node
+        , nodeIcon node
+        , nodeName node
         ]
+
+
+nodeLabel : Node -> Element msg
+nodeLabel =
+    Node.label >> Text.smallText [ Font.bold, centerX ]
+
+
+nodeIcon : Node -> Element msg
+nodeIcon node =
+    case Node.tipe node of
+        Node.InternetNode ->
+            el [ centerX, centerY ] Server.icon
+
+        Node.Ec2Node ->
+            el [ centerX, centerY ] Server.icon
+
+        Node.RdsNode ->
+            el [ centerX, centerY ] Database.icon
+
+        Node.EcsTaskNode ->
+            el [ centerX, centerY ] Server.icon
+
+        Node.LoadBalancerNode ->
+            el [ centerX, centerY ] LoadBalancer.icon
+
+
+nodeName : Node -> Element msg
+nodeName node =
+    let
+        name =
+            Node.name node
+
+        alignment =
+            if String.length name < 12 then
+                centerX
+
+            else
+                alignLeft
+    in
+    Text.smallText [ Background.color Colors.white, alignment ] name
 
 
 subnetName =
@@ -349,7 +396,7 @@ subnetName =
         [ width fill
         , Border.widthEach { edges | top = 1 }
         ]
-        (Text.text [ alignRight, padding Scale.verySmall ] "subnet ABC")
+        (Text.smallText [ alignRight, padding Scale.verySmall ] "subnet ABC")
 
 
 subnetsHeader : String -> Element msg
@@ -363,13 +410,17 @@ subnetsHeader =
         ]
 
 
-publicSubnets : Element msg
-publicSubnets =
-    column [ width fill, height fill ] [ subnetsHeader "Public subnets" ]
+publicSubnets : Vpc -> Element msg
+publicSubnets vpc =
+    column [ width fill, height fill ]
+        [ subnetsHeader "Public subnets"
+        , viewSubnets2 (Vpc.publicSubnets vpc)
+        ]
 
 
 connections =
-    column [ width (fillPortion 2), centerX, spacing Scale.large ] [ internet, connectivityPanel ]
+    el [ width (fillPortion 2), Background.color Colors.lightGrey, height fill ]
+        (column [ centerY, centerX, spacing Scale.large ] [ internet, connectivityPanel ])
 
 
 internet =

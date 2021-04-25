@@ -4,6 +4,7 @@ module Vpc exposing
     , build
     , idAsString
     , privateSubnets
+    , publicSubnets
     , subnets
     )
 
@@ -37,6 +38,11 @@ subnets (Vpc vpc_) =
 privateSubnets : Vpc -> List Subnet
 privateSubnets (Vpc vpc_) =
     List.filter (Subnet.isPublic >> not) vpc_.subnets
+
+
+publicSubnets : Vpc -> List Subnet
+publicSubnets (Vpc vpc_) =
+    List.filter Subnet.isPublic vpc_.subnets
 
 
 idAsString : Vpc -> String

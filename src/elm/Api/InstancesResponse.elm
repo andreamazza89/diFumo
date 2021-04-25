@@ -2,6 +2,7 @@ module Api.InstancesResponse exposing (..)
 
 import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
+import Tag exposing (Tag)
 
 
 type alias InstancesResponse =
@@ -15,6 +16,7 @@ type alias InstanceResponse =
     , publicIp : Maybe Ipv4Address
     , securityGroups : List String
     , vpcId : VpcId
+    , tags : List Tag
     }
 
 
@@ -30,13 +32,14 @@ decoder =
 
 instanceDecoder : Json.Decoder InstanceResponse
 instanceDecoder =
-    Json.map6 InstanceResponse
+    Json.map7 InstanceResponse
         (Json.field "InstanceId" Json.string)
         (Json.field "SubnetId" Json.string)
         (Json.field "PrivateIpAddress" IpAddress.v4Decoder)
         publicIpDecoder
         (Json.field "SecurityGroups" (Json.list (Json.field "GroupId" Json.string)))
         (Json.field "VpcId" Json.string)
+        Tag.decoder
 
 
 publicIpDecoder : Json.Decoder (Maybe Ipv4Address)

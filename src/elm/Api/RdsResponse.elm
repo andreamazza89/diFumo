@@ -13,6 +13,7 @@ type alias RdsResponse =
     , isPubliclyAccessible : Bool
     , subnetIds : List String
     , vpcId : String
+    , name : String
     }
 
 
@@ -29,12 +30,13 @@ decoder =
 
 decoder_ : Json.Decoder RdsResponse
 decoder_ =
-    Json.map5 RdsResponse
+    Json.map6 RdsResponse
         (Json.field "DBInstanceIdentifier" Json.string)
         (Json.field "VpcSecurityGroups" securityGroupsDecoder)
         (Json.field "PubliclyAccessible" Json.bool)
         subnetIdsDecoder
         (Json.at [ "DBSubnetGroup", "VpcId" ] Json.string)
+        (Json.field "DBName" Json.string)
 
 
 securityGroupsDecoder : Json.Decoder (List String)
