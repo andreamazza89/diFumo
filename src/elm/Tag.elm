@@ -24,6 +24,14 @@ decoder =
 
 decoder_ : Json.Decoder (List Tag)
 decoder_ =
+    Json.oneOf
+        [ tagsDecoder
+        , Json.succeed []
+        ]
+
+
+tagsDecoder : Json.Decoder (List Tag)
+tagsDecoder =
     Json.list
         (Json.map2 Tag
             (Json.field "Key" Json.string)

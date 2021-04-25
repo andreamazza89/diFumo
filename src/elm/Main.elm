@@ -329,13 +329,17 @@ viewSubnet2 subnet =
 
 
 viewNodes2 : List Node -> Element msg
-viewNodes2 =
-    List.map viewNode2
-        >> wrappedRow
-            [ spacing Scale.small
-            , height fill
-            , padding Scale.small
-            ]
+viewNodes2 nodes =
+    if List.isEmpty nodes then
+        Text.text [ padding Scale.small ] "this subnet is empty"
+
+    else
+        List.map viewNode2 nodes
+            |> wrappedRow
+                [ spacing Scale.small
+                , height fill
+                , padding Scale.small
+                ]
 
 
 viewNode2 : Node -> Element msg
@@ -417,7 +421,7 @@ subnetsHeader =
 
 publicSubnets : Vpc -> Element msg
 publicSubnets vpc =
-    column [ width fill, height fill ]
+    column [ width fill, height fill, spacing Scale.medium ]
         [ subnetsHeader "Public subnets"
         , viewSubnets2 (Vpc.publicSubnets vpc)
         ]

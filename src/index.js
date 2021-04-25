@@ -104,6 +104,7 @@ const awsClient = (credentials, onDataReceived) => (
                         ecsTasksResponse: ecsTasks.Tasks,
                         loadBalancersResponse: loadBalancers.LoadBalancers,
                     }
+                    console.log(awsData)
                     onDataReceived(awsData)
                 })
         }

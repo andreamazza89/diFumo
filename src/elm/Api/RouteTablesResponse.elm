@@ -23,6 +23,7 @@ type alias RouteTableResponse =
     { subnetsAssociated : List SubnetId
     , vpcId : VpcId
     , table : RouteTable
+    , isMainTable : Bool
     }
 
 
@@ -59,10 +60,11 @@ explicitTablesDecoder =
 
 routeTableDecoder : Json.Decoder RouteTableResponse
 routeTableDecoder =
-    Json.map3 RouteTableResponse
+    Json.map4 RouteTableResponse
         subnetAssociationsDecoder
         vpcIdDecoder
         RouteTable.decoder
+        mainTableFlagDecoder
 
 
 implicitTablesDecoder : Json.Decoder (List ImplicitRouteTableResponse)
@@ -82,7 +84,7 @@ toExplicitTable tableResponse =
 
 toImplicitTable : RouteTableResponse -> Maybe ( VpcId, RouteTable )
 toImplicitTable tableResponse =
-    if List.isEmpty tableResponse.subnetsAssociated then
+    if tableResponse.isMainTable then
         Just ( tableResponse.vpcId, tableResponse.table )
 
     else
@@ -112,6 +114,12 @@ subnetAssociationDecoder =
 vpcIdDecoder : Json.Decoder VpcId
 vpcIdDecoder =
     Json.field "VpcId" Json.string
+
+
+mainTableFlagDecoder : Json.Decoder Bool
+mainTableFlagDecoder =
+    Json.field "Associations" (Json.list (Json.field "Main" Json.bool))
+        |> Json.map (List.any Basics.identity)
 
 
 find : VpcId -> SubnetId -> RouteTablesResponse -> Result String RouteTable
