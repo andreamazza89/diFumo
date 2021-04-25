@@ -1,4 +1,4 @@
-module Tag exposing (Tag, decoder, findName)
+module Tag exposing (Tag, decoder, findNameOr)
 
 import Json.Decode as Json
 
@@ -9,11 +9,12 @@ type alias Tag =
     }
 
 
-findName : List Tag -> Maybe String
-findName =
+findNameOr : String -> List Tag -> String
+findNameOr default =
     List.filter (.name >> String.toLower >> (==) "name")
         >> List.head
         >> Maybe.map .value
+        >> Maybe.withDefault default
 
 
 decoder : Json.Decoder (List Tag)

@@ -34,8 +34,7 @@ type Ec2Id
 
 name : Ec2 -> String
 name ((Ec2 ec2) as instance) =
-    Tag.findName ec2.tags
-        |> Maybe.withDefault (idAsString instance)
+    Tag.findNameOr (idAsString instance) ec2.tags
 
 
 equals : Ec2 -> Ec2 -> Bool

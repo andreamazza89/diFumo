@@ -10,6 +10,7 @@ import Api.RouteTablesResponse as RouteTablesResponse exposing (RouteTablesRespo
 import Dict exposing (Dict)
 import Json.Decode as Json
 import Node exposing (Node)
+import Tag exposing (Tag)
 import Utils.Dict as Dict
 import Utils.Json as Json
 import Utils.NonEmptyList as NonEmptyList exposing (NonEmptyList)
@@ -58,9 +59,10 @@ subnetsDecoder =
 
 subnetDecoder : Json.Decoder SubnetResponse
 subnetDecoder =
-    Json.map2 SubnetResponse
+    Json.map3 SubnetResponse
         (Json.field "SubnetId" Json.string)
         (Json.field "VpcId" Json.string)
+        Tag.decoder
 
 
 securityGroupsDecoder : Json.Decoder (List SecurityGroup)
@@ -97,6 +99,7 @@ type alias SubnetsResponse =
 type alias SubnetResponse =
     { id : String
     , vpcId : String
+    , tags : List Tag
     }
 
 
@@ -301,7 +304,7 @@ collectSubnet routeTables nodesBySubnet subnetResponse subnetsByVpc =
             RouteTablesResponse.find subnetResponse.vpcId subnetResponse.id routeTables
 
         subnet =
-            Result.map (Subnet.build subnetResponse.id nodes) routeTable
+            Result.map (Subnet.build subnetResponse.id nodes subnetResponse.tags) routeTable
     in
     Result.map2
         (\s ss ->

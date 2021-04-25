@@ -293,10 +293,12 @@ loadedView loaded =
         ]
 
 
+subnets : Vpc -> Element msg
 subnets vpc =
     row [ width (fillPortion 7), spacing Scale.medium ] [ privateSubnets vpc, publicSubnets vpc ]
 
 
+privateSubnets : Vpc -> Element msg
 privateSubnets vpc =
     column [ width fill, height fill, spacing Scale.medium ]
         [ subnetsHeader "Private subnets"
@@ -304,6 +306,7 @@ privateSubnets vpc =
         ]
 
 
+viewSubnets2 : List Subnet -> Element msg
 viewSubnets2 =
     List.map viewSubnet2
         >> column
@@ -312,6 +315,7 @@ viewSubnets2 =
             ]
 
 
+viewSubnet2 : Subnet -> Element msg
 viewSubnet2 subnet =
     column
         [ width fill
@@ -320,7 +324,7 @@ viewSubnet2 subnet =
         , Background.color Colors.lightGrey
         ]
         [ viewNodes2 (Subnet.nodes subnet)
-        , subnetName
+        , subnetName subnet
         ]
 
 
@@ -391,12 +395,13 @@ nodeName node =
     Text.smallText [ Background.color Colors.white, alignment ] name
 
 
-subnetName =
+subnetName : Subnet -> Element msg
+subnetName subnet =
     el
         [ width fill
         , Border.widthEach { edges | top = 1 }
         ]
-        (Text.smallText [ alignRight, padding Scale.verySmall ] "subnet ABC")
+        (Text.smallText [ alignRight, padding Scale.verySmall ] (Subnet.name subnet))
 
 
 subnetsHeader : String -> Element msg
