@@ -329,6 +329,7 @@ viewSubnets2 =
         >> column
             [ width fill
             , height fill
+            , scrollbarY
             , spacing Scale.medium
             ]
 
@@ -379,7 +380,7 @@ viewNode2 node =
 
 nodeLabel : Node -> Element msg
 nodeLabel =
-    Node.label >> Text.smallText [ Font.bold, centerX ]
+    Node.label >> Text.nodeLabel [ centerX ]
 
 
 nodeIcon : Node -> Element msg
@@ -475,13 +476,42 @@ internet =
 
 connectivityPanel : Element msg
 connectivityPanel =
-    el
+    column
         [ Background.color Colors.lightGrey
+        , spacing Scale.large
+        , padding Scale.medium
         , width fill
         , height fill
         , Border.widthEach { edges | left = 2, top = 2 }
+        , Border.dashed
         ]
-        (text "connectivity panel")
+        [ sourceNode2
+        , destinationNode2
+        , connectivityIssues
+        ]
+
+
+sourceNode2 : Element msg
+sourceNode2 =
+    readOnlyNodeField "Source node" 42
+
+
+destinationNode2 : Element msg
+destinationNode2 =
+    readOnlyNodeField "Destination node" 42
+
+
+readOnlyNodeField label node =
+    column [ spacing Scale.small ]
+        [ Text.fieldLabel [] label
+        , row [ spacing Scale.verySmall ] [ Text.nodeLabel [] "PUM", Text.smallText [] ("(" ++ "the internet" ++ ")") ]
+        ]
+
+
+connectivityIssues =
+    column []
+        [ Text.header [] "Connectivity Issues"
+        ]
 
 
 
