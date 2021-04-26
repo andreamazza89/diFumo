@@ -2,8 +2,10 @@ module Port exposing
     ( Port
     , decoder
     , first
+    , https
     , isWithin
     , last
+    , toString
     )
 
 -- Port
@@ -29,6 +31,11 @@ last =
     65535
 
 
+https : Port
+https =
+    443
+
+
 
 -- Query
 
@@ -36,6 +43,11 @@ last =
 isWithin : { a | fromPort : Port, toPort : Port } -> Port -> Bool
 isWithin { fromPort, toPort } givenPort =
     fromPort <= givenPort && givenPort <= toPort
+
+
+toString : Port -> String
+toString =
+    String.fromInt
 
 
 

@@ -46,6 +46,7 @@ type alias Loaded_ =
     { otherVpcs : List Vpc
     , vpcSelected : Vpc
     , pathSelection : PathSelection
+    , portSelected : String
     }
 
 
@@ -57,7 +58,7 @@ type PathSelection
 
 type Msg
     = NodeClicked Node
-    | PortTyped Port
+    | PortTyped String
     | NoOp
     | ReceivedVpcs (Result String (NonEmptyList Vpc))
     | SubmitCredentialsClicked
@@ -101,6 +102,7 @@ update msg model =
                 { vpcSelected = NonEmptyList.head vpcs
                 , otherVpcs = NonEmptyList.tail vpcs
                 , pathSelection = NothingSelected
+                , portSelected = Port.https |> Port.toString
                 }
                 (credentials model)
             , Cmd.none
@@ -146,7 +148,7 @@ updateSelection nodeSelected model =
                     Loaded { loaded | pathSelection = SourceNode nodeSelected } creds
 
 
-updatePort : Port -> Model -> Model
+updatePort : String -> Model -> Model
 updatePort portNumber model =
     case model of
         Loading creds ->
@@ -156,15 +158,7 @@ updatePort portNumber model =
             WaitingForCredentials creds
 
         Loaded loaded creds ->
-            case loaded.pathSelection of
-                NothingSelected ->
-                    Loaded loaded creds
-
-                SourceNode _ ->
-                    Loaded loaded creds
-
-                Path path _ ->
-                    Loaded { loaded | pathSelection = Path path portNumber } creds
+            Loaded { loaded | portSelected = portNumber } creds
 
 
 updateAccessKeyId : String -> Model -> Model
@@ -219,8 +213,8 @@ credentials model =
             creds
 
 
-portSelected : Model -> String
-portSelected model =
+portSelectedDelete : Model -> String
+portSelectedDelete model =
     case model of
         Loading _ ->
             "80"
@@ -370,7 +364,7 @@ viewNode2 model node =
         , width (px Scale.veryLarge)
         , height (px Scale.veryLarge)
         , nodeBackground model node
-        , onHover model node
+        , mouseOver [ Background.color Colors.olive ]
         , htmlAttribute (Html.Attributes.class "node")
         , onClick (NodeClicked node)
         , pointer
@@ -388,10 +382,6 @@ nodeBackground model node =
 
     else
         Background.color Colors.white
-
-
-onHover model node =
-    mouseOver [ Background.color Colors.olive ]
 
 
 nodeLabel : Node -> Element msg
@@ -475,7 +465,7 @@ connections model =
         , spacing Scale.large
         ]
         [ internet model
-        , connectivityPanel
+        , connectivityPanel model
         ]
 
 
@@ -490,8 +480,8 @@ internet model =
         ]
 
 
-connectivityPanel : Element msg
-connectivityPanel =
+connectivityPanel : Loaded_ -> Element Msg
+connectivityPanel { pathSelection, portSelected } =
     column
         [ Background.color Colors.lightGrey
         , spacing Scale.large
@@ -501,29 +491,71 @@ connectivityPanel =
         , Border.widthEach { edges | left = 2, top = 2 }
         , Border.dashed
         ]
-        [ sourceNode2
-        , destinationNode2
+        [ sourceNode2 pathSelection
+        , destinationNode2 pathSelection
+        , selectPort2 portSelected
+        , selectProtocol
         , connectivityIssues
         ]
 
 
-sourceNode2 : Element msg
-sourceNode2 =
-    readOnlyNodeField "Source node" 42
+sourceNode2 : PathSelection -> Element msg
+sourceNode2 selection =
+    case selection of
+        NothingSelected ->
+            readOnlyNodeField "Source node" Nothing
+
+        SourceNode node ->
+            readOnlyNodeField "Source node" (Just node)
+
+        Path { from } _ ->
+            readOnlyNodeField "Source node" (Just from)
 
 
-destinationNode2 : Element msg
-destinationNode2 =
-    readOnlyNodeField "Destination node" 42
+destinationNode2 selection =
+    case selection of
+        NothingSelected ->
+            readOnlyNodeField "Destination node" Nothing
+
+        SourceNode _ ->
+            readOnlyNodeField "Destination node" Nothing
+
+        Path { to } _ ->
+            readOnlyNodeField "Destination node" (Just to)
 
 
 readOnlyNodeField label node =
     column [ spacing Scale.small ]
         [ Text.fieldLabel [] label
-        , row [ spacing Scale.verySmall ]
-            [ Text.nodeLabel [] "PUM"
-            , Text.smallText [] ("(" ++ "the internet" ++ ")")
-            ]
+        , Maybe.map
+            (\n ->
+                row [ spacing Scale.verySmall ]
+                    [ Text.nodeLabel [] (Node.label n)
+                    , Text.smallText [] ("(" ++ Node.name n ++ ")")
+                    ]
+            )
+            node
+            |> Maybe.withDefault (Text.smallText [] "Please select a node")
+        ]
+
+
+selectPort2 : String -> Element Msg
+selectPort2 portSelected =
+    column [ spacing Scale.small ]
+        [ Text.fieldLabel [] "Port"
+        , Input.text [ Background.color Colors.lightGrey ]
+            { onChange = PortTyped
+            , text = portSelected
+            , placeholder = Nothing
+            , label = Input.labelHidden "select-port"
+            }
+        ]
+
+
+selectProtocol =
+    column [ spacing Scale.small ]
+        [ Text.fieldLabel [] "Protocol"
+        , Text.smallText [] "TCP"
         ]
 
 
@@ -634,8 +666,8 @@ showConnectionInfo path forPort model =
 selectPort : Model -> Element Msg
 selectPort model =
     Input.text []
-        { onChange = String.toInt >> Maybe.map PortTyped >> Maybe.withDefault NoOp
-        , text = portSelected model
+        { onChange = PortTyped
+        , text = portSelectedDelete model
         , placeholder = Nothing
         , label = Input.labelHidden "select-port"
         }
