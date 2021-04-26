@@ -481,7 +481,7 @@ internet model =
 
 
 connectivityPanel : Loaded_ -> Element Msg
-connectivityPanel { pathSelection, portSelected } =
+connectivityPanel ({ pathSelection, portSelected } as loaded) =
     column
         [ Background.color Colors.lightGrey
         , spacing Scale.large
@@ -495,7 +495,7 @@ connectivityPanel { pathSelection, portSelected } =
         , destinationNode2 pathSelection
         , selectPort2 portSelected
         , selectProtocol
-        , connectivityIssues
+        , connectivityIssues loaded
         ]
 
 
@@ -559,10 +559,13 @@ selectProtocol =
         ]
 
 
-connectivityIssues =
-    column []
-        [ Text.header [] "Connectivity Issues"
-        ]
+connectivityIssues { pathSelection, portSelected } =
+    case ( pathSelection, Port.fromString portSelected ) of
+        ( Path path _, Just port_ ) ->
+            showConnectionInfo path port_
+
+        ( _, _ ) ->
+            none
 
 
 
@@ -637,8 +640,8 @@ selectRegion =
     text "region selection"
 
 
-showConnectionInfo : { a | from : Node, to : Node } -> Port -> Model -> Element Msg
-showConnectionInfo path forPort model =
+showConnectionInfo : { a | from : Node, to : Node } -> Port -> Element Msg
+showConnectionInfo path forPort =
     let
         connectivity =
             Connectivity.check
@@ -650,15 +653,14 @@ showConnectionInfo path forPort model =
     in
     case connectivity of
         Connectivity.Possible ->
-            column []
-                [ selectPort model
-                , text ("👍 You should be able to communicate over port " ++ String.fromInt forPort)
+            column [ width fill ]
+                [ Text.text [ Font.size 44, centerX ] "👍"
                 ]
 
         Connectivity.NotPossible connectionIssues ->
-            column []
-                (selectPort model
-                    :: text ("🎺 Unfortunately you cannot communicate over port " ++ String.fromInt forPort ++ " because: ")
+            column [ spacing Scale.medium ]
+                (Text.header [] "🎺 Connectivity issues "
+                    :: paragraph [] [ Text.smallText [] "Below is a list of reasons why the two nodes selected cannot communicate." ]
                     :: viewIssues connectionIssues
                 )
 
@@ -680,30 +682,61 @@ viewIssues =
 
 viewIssue : Connectivity.ConnectionIssue -> Element Msg
 viewIssue issue =
+    paragraph
+        [ Border.width 1
+        , Border.rounded 5
+        , padding Scale.small
+        , Background.color Colors.olive
+        ]
+        [ column [ spacing Scale.small ] (viewIssue_ issue) ]
+
+
+viewIssue_ issue =
     case issue of
         Connectivity.MissingEgressRule ->
-            text "Egress (Explain here why a certain security group is missing an egress rule to allow outbound traffic)"
+            [ issueHeadline "Security Group: no egress rule for destination"
+            , Text.smallText [] "Egress (Explain here why a certain security group is missing an egress rule to allow outbound traffic)"
+            ]
 
         Connectivity.MissingIngressRule ->
-            text "Ingress (Explain here why a certain security group is missing an ingress rule to allow outbound traffic)"
+            [ issueHeadline "Security Group: no ingress rule from source"
+            , Text.smallText [] "Ingress (Explain here why a certain security group is missing an ingress rule to allow outbound traffic)"
+            ]
 
         Connectivity.RouteTableForSourceHasNoEntryForTargetAddress ->
-            text "Route table (Explain here why the route table for the source node does have a route to the target address)"
+            [ issueHeadline "Route Table: no route to destination"
+            , Text.smallText [] "Route table (Explain here why the route table for the source node does have a route to the target address)"
+            ]
 
         Connectivity.RouteTableForDestinationHasNoEntryForSourceAddress ->
-            text "Route table (Explain here why the route table for the target node does have a route for the source address)"
+            [ issueHeadline "Route Table: no route from source"
+            , Text.smallText [] "Route table (Explain here why the route table for the target node does have a route for the source address)"
+            ]
 
         Connectivity.NodeCannotReachTheInternet ->
-            text "NodeCannotReachTheInternet"
+            [ issueHeadline "Internet connectivity: source node cannot reach the internet"
+            , Text.smallText [] "NodeCannotReachTheInternet"
+            ]
 
         Connectivity.NodeCannotBeReachedFromTheInternet ->
-            text "NodeCannotBeReachedFromTheInternet"
+            [ issueHeadline "Internet connectivity: source node cannot be reached from the internet"
+            , Text.smallText [] "NodeCannotBeReachedFromTheInternet"
+            ]
 
         Connectivity.NetworkACLIngressRules ->
-            text "NetworkACLIngressRules"
+            [ issueHeadline "Network ACL: traffic not allowed from source"
+            , Text.smallText [] "NetworkACLIngressRules"
+            ]
 
         Connectivity.NetworkACLEgressRules ->
-            text "NetworkACLEgressRules"
+            [ issueHeadline "Network ACL: traffic not allowed to destination"
+            , Text.smallText [] "NetworkACLEgressRules"
+            ]
+
+
+issueHeadline : String -> Element msg
+issueHeadline =
+    Text.smallText [ Font.bold ]
 
 
 internetNode : Loaded_ -> Element Msg

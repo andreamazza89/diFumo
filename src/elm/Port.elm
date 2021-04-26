@@ -2,6 +2,7 @@ module Port exposing
     ( Port
     , decoder
     , first
+    , fromString
     , https
     , isWithin
     , last
@@ -19,6 +20,20 @@ type alias Port =
 
 
 -- Build
+
+
+fromString : String -> Maybe Port
+fromString =
+    String.toInt >> Maybe.andThen build
+
+
+build : Int -> Maybe Port
+build n =
+    if n >= first && n <= last then
+        Just n
+
+    else
+        Nothing
 
 
 first : Port
