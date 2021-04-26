@@ -1,4 +1,4 @@
-module Element.Colors exposing (darkGrey, lightGrey, white)
+module Element.Colors exposing (darkGrey, lightGrey, olive, white)
 
 import Element exposing (rgb255)
 
@@ -16,3 +16,8 @@ lightGrey =
 white : Element.Color
 white =
     rgb255 255 255 255
+
+
+olive : Element.Color
+olive =
+    rgb255 199 206 194

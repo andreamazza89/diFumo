@@ -277,11 +277,11 @@ theWorld model =
                 ]
 
         Loaded loaded _ ->
-            loadedView loaded
+            loadedView loaded loaded
 
 
-loadedView : Loaded_ -> Element Msg
-loadedView loaded =
+loadedView : Loaded_ -> Loaded_ -> Element Msg
+loadedView model loaded =
     column
         [ width fill
         , height fill
@@ -293,39 +293,39 @@ loadedView loaded =
             , padding Scale.small
             , spacing Scale.medium
             ]
-            [ subnets loaded.vpcSelected
-            , connections
+            [ subnets model loaded.vpcSelected
+            , connections model
             ]
         ]
 
 
-subnets : Vpc -> Element msg
-subnets vpc =
+subnets : Loaded_ -> Vpc -> Element Msg
+subnets model vpc =
     row
         [ width (fillPortion 7)
         , height fill
         , spacing Scale.medium
         ]
-        [ privateSubnets vpc
-        , publicSubnets vpc
+        [ privateSubnets model vpc
+        , publicSubnets model vpc
         ]
 
 
-privateSubnets : Vpc -> Element msg
-privateSubnets vpc =
+privateSubnets : Loaded_ -> Vpc -> Element Msg
+privateSubnets model vpc =
     column
         [ width fill
         , height fill
         , spacing Scale.medium
         ]
         [ subnetsHeader "Private subnets"
-        , viewSubnets2 (Vpc.privateSubnets vpc)
+        , viewSubnets2 model (Vpc.privateSubnets vpc)
         ]
 
 
-viewSubnets2 : List Subnet -> Element msg
-viewSubnets2 =
-    List.map viewSubnet2
+viewSubnets2 : Loaded_ -> List Subnet -> Element Msg
+viewSubnets2 model =
+    List.map (viewSubnet2 model)
         >> column
             [ width fill
             , height fill
@@ -334,26 +334,26 @@ viewSubnets2 =
             ]
 
 
-viewSubnet2 : Subnet -> Element msg
-viewSubnet2 subnet =
+viewSubnet2 : Loaded_ -> Subnet -> Element Msg
+viewSubnet2 model subnet =
     column
         [ width fill
         , Border.width 1
         , Border.rounded 10
         , Background.color Colors.lightGrey
         ]
-        [ viewNodes2 (Subnet.nodes subnet)
+        [ viewNodes2 model (Subnet.nodes subnet)
         , subnetName subnet
         ]
 
 
-viewNodes2 : List Node -> Element msg
-viewNodes2 nodes =
+viewNodes2 : Loaded_ -> List Node -> Element Msg
+viewNodes2 model nodes =
     if List.isEmpty nodes then
         Text.text [ padding Scale.small ] "this subnet is empty"
 
     else
-        List.map viewNode2 nodes
+        List.map (viewNode2 model) nodes
             |> wrappedRow
                 [ spacing Scale.small
                 , height fill
@@ -361,21 +361,37 @@ viewNodes2 nodes =
                 ]
 
 
-viewNode2 : Node -> Element msg
-viewNode2 node =
+viewNode2 : Loaded_ -> Node -> Element Msg
+viewNode2 model node =
     column
         [ Border.width 1
         , Border.rounded 5
         , padding Scale.verySmall
         , width (px Scale.veryLarge)
         , height (px Scale.veryLarge)
-        , Background.color Colors.white
+        , nodeBackground model node
+        , onHover model node
         , htmlAttribute (Html.Attributes.class "node")
+        , onClick (NodeClicked node)
+        , pointer
         ]
         [ nodeLabel node
         , nodeIcon node
         , nodeName node
         ]
+
+
+nodeBackground : Loaded_ -> Node -> Attr decorative msg
+nodeBackground model node =
+    if isSelected node model then
+        Background.color Colors.olive
+
+    else
+        Background.color Colors.white
+
+
+onHover model node =
+    mouseOver [ Background.color Colors.olive ]
 
 
 nodeLabel : Node -> Element msg
@@ -443,33 +459,33 @@ subnetsHeader =
         ]
 
 
-publicSubnets : Vpc -> Element msg
-publicSubnets vpc =
+publicSubnets : Loaded_ -> Vpc -> Element Msg
+publicSubnets model vpc =
     column [ width fill, height fill, spacing Scale.medium ]
         [ subnetsHeader "Public subnets"
-        , viewSubnets2 (Vpc.publicSubnets vpc)
+        , viewSubnets2 model (Vpc.publicSubnets vpc)
         ]
 
 
-connections : Element msg
-connections =
+connections : Loaded_ -> Element Msg
+connections model =
     column
         [ width (fillPortion 2)
         , height fill
         , spacing Scale.large
         ]
-        [ internet
+        [ internet model
         , connectivityPanel
         ]
 
 
-internet : Element msg
-internet =
+internet : Loaded_ -> Element Msg
+internet model =
     row
         [ centerX
         , spacing Scale.medium
         ]
-        [ viewNode2 Node.internet
+        [ viewNode2 model Node.internet
         , Text.text [] "42 . 42 . 42. 42"
         ]
 
@@ -504,7 +520,10 @@ destinationNode2 =
 readOnlyNodeField label node =
     column [ spacing Scale.small ]
         [ Text.fieldLabel [] label
-        , row [ spacing Scale.verySmall ] [ Text.nodeLabel [] "PUM", Text.smallText [] ("(" ++ "the internet" ++ ")") ]
+        , row [ spacing Scale.verySmall ]
+            [ Text.nodeLabel [] "PUM"
+            , Text.smallText [] ("(" ++ "the internet" ++ ")")
+            ]
         ]
 
 
