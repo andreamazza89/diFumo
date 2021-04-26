@@ -10,6 +10,7 @@ import Element.Border as Border
 import Element.Colors as Colors
 import Element.Events exposing (onClick)
 import Element.Font as Font
+import Element.Icon.Cloud as Cloud
 import Element.Icon.Database as Database
 import Element.Icon.LoadBalancer as LoadBalancer
 import Element.Icon.Server as Server
@@ -78,7 +79,7 @@ subscriptions _ =
 
 view : Model -> Document Msg
 view model =
-    { body = [ Element.layout [] (theWorld model) ]
+    { body = [ Element.layout [ width fill, height fill ] (theWorld model) ]
     , title = "DiFumo"
     }
 
@@ -281,11 +282,16 @@ theWorld model =
 
 loadedView : Loaded_ -> Element Msg
 loadedView loaded =
-    column [ width fill, height fill ]
+    column
+        [ width fill
+        , height fill
+        ]
         [ topBar
         , row
             [ width fill
-            , padding Scale.medium
+            , height fill
+            , padding Scale.small
+            , spacing Scale.medium
             ]
             [ subnets loaded.vpcSelected
             , connections
@@ -295,12 +301,23 @@ loadedView loaded =
 
 subnets : Vpc -> Element msg
 subnets vpc =
-    row [ width (fillPortion 7), spacing Scale.medium ] [ privateSubnets vpc, publicSubnets vpc ]
+    row
+        [ width (fillPortion 7)
+        , height fill
+        , spacing Scale.medium
+        ]
+        [ privateSubnets vpc
+        , publicSubnets vpc
+        ]
 
 
 privateSubnets : Vpc -> Element msg
 privateSubnets vpc =
-    column [ width fill, height fill, spacing Scale.medium ]
+    column
+        [ width fill
+        , height fill
+        , spacing Scale.medium
+        ]
         [ subnetsHeader "Private subnets"
         , viewSubnets2 (Vpc.privateSubnets vpc)
         ]
@@ -311,6 +328,7 @@ viewSubnets2 =
     List.map viewSubnet2
         >> column
             [ width fill
+            , height fill
             , spacing Scale.medium
             ]
 
@@ -368,7 +386,7 @@ nodeIcon : Node -> Element msg
 nodeIcon node =
     case Node.tipe node of
         Node.InternetNode ->
-            el [ centerX, centerY ] Server.icon
+            el [ centerX, centerY ] Cloud.icon
 
         Node.Ec2Node ->
             el [ centerX, centerY ] Server.icon
@@ -396,7 +414,12 @@ nodeName node =
             else
                 alignLeft
     in
-    Text.smallText [ Background.color Colors.white, alignment ] name
+    case Node.tipe node of
+        Node.InternetNode ->
+            none
+
+        _ ->
+            Text.smallText [ Background.color Colors.white, alignment ] name
 
 
 subnetName : Subnet -> Element msg
@@ -427,17 +450,38 @@ publicSubnets vpc =
         ]
 
 
+connections : Element msg
 connections =
-    el [ width (fillPortion 2), Background.color Colors.lightGrey, height fill ]
-        (column [ centerY, centerX, spacing Scale.large ] [ internet, connectivityPanel ])
+    column
+        [ width (fillPortion 2)
+        , height fill
+        , spacing Scale.large
+        ]
+        [ internet
+        , connectivityPanel
+        ]
 
 
+internet : Element msg
 internet =
-    el [] (text "internet node")
+    row
+        [ centerX
+        , spacing Scale.medium
+        ]
+        [ viewNode2 Node.internet
+        , Text.text [] "42 . 42 . 42. 42"
+        ]
 
 
+connectivityPanel : Element msg
 connectivityPanel =
-    el [] (text "connectivity panel")
+    el
+        [ Background.color Colors.lightGrey
+        , width fill
+        , height fill
+        , Border.widthEach { edges | left = 2, top = 2 }
+        ]
+        (text "connectivity panel")
 
 
 
