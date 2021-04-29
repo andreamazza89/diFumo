@@ -17,6 +17,7 @@ import Element.Icon.Server as Server
 import Element.Input as Input
 import Element.Scale as Scale exposing (edges)
 import Element.Text as Text
+import Hints
 import Html.Attributes
 import Node exposing (Node)
 import Port exposing (Port)
@@ -660,7 +661,6 @@ showConnectionInfo path forPort =
         Connectivity.NotPossible connectionIssues ->
             column [ spacing Scale.medium ]
                 (Text.header [] "🎺 Connectivity issues "
-                    :: paragraph [] [ Text.smallText [] "Below is a list of reasons why the two nodes selected cannot communicate." ]
                     :: viewIssues connectionIssues
                 )
 
@@ -691,47 +691,19 @@ viewIssue issue =
         [ column [ spacing Scale.small ] (viewIssue_ issue) ]
 
 
+viewIssue_ : Connectivity.ConnectionIssue -> List (Element msg)
 viewIssue_ issue =
-    case issue of
-        Connectivity.MissingEgressRule ->
-            [ issueHeadline "Security Group: no egress rule for destination"
-            , Text.smallText [] "Egress (Explain here why a certain security group is missing an egress rule to allow outbound traffic)"
-            ]
-
-        Connectivity.MissingIngressRule ->
-            [ issueHeadline "Security Group: no ingress rule from source"
-            , Text.smallText [] "Ingress (Explain here why a certain security group is missing an ingress rule to allow outbound traffic)"
-            ]
-
-        Connectivity.RouteTableForSourceHasNoEntryForTargetAddress ->
-            [ issueHeadline "Route Table: no route to destination"
-            , Text.smallText [] "Route table (Explain here why the route table for the source node does have a route to the target address)"
-            ]
-
-        Connectivity.RouteTableForDestinationHasNoEntryForSourceAddress ->
-            [ issueHeadline "Route Table: no route from source"
-            , Text.smallText [] "Route table (Explain here why the route table for the target node does have a route for the source address)"
-            ]
-
-        Connectivity.NodeCannotReachTheInternet ->
-            [ issueHeadline "Internet connectivity: source node cannot reach the internet"
-            , Text.smallText [] "NodeCannotReachTheInternet"
-            ]
-
-        Connectivity.NodeCannotBeReachedFromTheInternet ->
-            [ issueHeadline "Internet connectivity: source node cannot be reached from the internet"
-            , Text.smallText [] "NodeCannotBeReachedFromTheInternet"
-            ]
-
-        Connectivity.NetworkACLIngressRules ->
-            [ issueHeadline "Network ACL: traffic not allowed from source"
-            , Text.smallText [] "NetworkACLIngressRules"
-            ]
-
-        Connectivity.NetworkACLEgressRules ->
-            [ issueHeadline "Network ACL: traffic not allowed to destination"
-            , Text.smallText [] "NetworkACLEgressRules"
-            ]
+    [ issueHeadline (Hints.forIssue issue).headline
+    , Text.smallText [] (Hints.forIssue issue).description
+    , column [ spacing Scale.verySmall ]
+        [ Text.smallText [ Font.bold ] "Potential fix: "
+        , Text.smallText [] (Hints.forIssue issue).suggestedFix
+        ]
+    , newTabLink []
+        { url = "https://google.com"
+        , label = Text.smallText [ Font.underline ] "Link to console (new tab)"
+        }
+    ]
 
 
 issueHeadline : String -> Element msg
