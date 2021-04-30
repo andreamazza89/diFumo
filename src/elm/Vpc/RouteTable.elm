@@ -4,6 +4,7 @@ module Vpc.RouteTable exposing
     , build
     , decoder
     , hasRouteTo
+    , idAsString
     , internetGateway
     , isPublic
     )
@@ -23,6 +24,7 @@ type RouteTable
 
 type alias RouteTable_ =
     { routes : List ( Cidr, Route ) -- TODO: make it a NonEmpty List
+    , id : RouteTableId
     }
 
 
@@ -30,6 +32,10 @@ type Route
     = Local
     | InternetGateway
     | NatGateway
+
+
+type RouteTableId
+    = RouteTableId String
 
 
 
@@ -53,6 +59,13 @@ isPublic (RouteTable { routes }) =
         |> not
 
 
+idAsString : RouteTable -> String
+idAsString (RouteTable { id }) =
+    case id of
+        RouteTableId id_ ->
+            id_
+
+
 
 -- Decoder
 
@@ -61,7 +74,7 @@ decoder : Json.Decoder RouteTable
 decoder =
     Json.field "Routes" routesDecoder
         |> Json.map (List.filterMap Basics.identity)
-        |> Json.map build
+        |> (\rulesDecoder -> Json.map2 build rulesDecoder (Json.field "RouteTableId" Json.string))
 
 
 routesDecoder : Json.Decoder (List (Maybe ( Cidr, Route )))
@@ -146,6 +159,7 @@ internetGateway =
     InternetGateway
 
 
-build : List ( Cidr, Route ) -> RouteTable
-build =
-    RouteTable_ >> RouteTable
+build : List ( Cidr, Route ) -> String -> RouteTable
+build rules id =
+    RouteTable_ rules (RouteTableId id)
+        |> RouteTable

@@ -18,6 +18,8 @@ module Node exposing
     , isInternet
     , label
     , name
+    , routeTable
+    , securityGroups
     , tipe
     )
 
@@ -219,7 +221,7 @@ allowsEgress fromNode toNode forProtocol overPort =
             -- If the source node is the internet, then there are no egress rules to check
             True
 
-        Vpc { securityGroups } _ ->
+        Vpc node _ ->
             let
                 target =
                     { ip = ipv4Address toNode
@@ -227,7 +229,7 @@ allowsEgress fromNode toNode forProtocol overPort =
                     , overPort = overPort
                     }
             in
-            SecurityGroup.allowsEgress target securityGroups
+            SecurityGroup.allowsEgress target node.securityGroups
 
 
 allowsIngress : Node -> Node -> Protocol -> Port -> Bool
@@ -237,7 +239,7 @@ allowsIngress fromNode toNode forProtocol overPort =
             -- If the destination node is the internet, then there are no ingress rules to check
             True
 
-        Vpc { securityGroups } _ ->
+        Vpc node _ ->
             let
                 target =
                     { ip = ipv4Address fromNode
@@ -245,7 +247,7 @@ allowsIngress fromNode toNode forProtocol overPort =
                     , overPort = overPort
                     }
             in
-            SecurityGroup.allowsIngress target securityGroups
+            SecurityGroup.allowsIngress target node.securityGroups
 
 
 hasRouteTo : Node -> Node -> Bool
@@ -316,6 +318,26 @@ vpcNodeCanAccessInternet node =
 
         LoadBalancer loadBalancer ->
             LoadBalancer.canAccessInternet loadBalancer
+
+
+securityGroups : Node -> List SecurityGroup
+securityGroups node =
+    case node of
+        Internet ->
+            []
+
+        Vpc node_ _ ->
+            node_.securityGroups
+
+
+routeTable : Node -> Maybe RouteTable
+routeTable node =
+    case node of
+        Internet ->
+            Nothing
+
+        Vpc node_ _ ->
+            Just node_.routeTable
 
 
 

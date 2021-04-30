@@ -109,15 +109,15 @@ checkRouteTables { fromNode, toNode } =
 checkSourceTable : Node -> Node -> Connectivity
 checkSourceTable fromNode toNode =
     check_
-        (Node.hasRouteTo fromNode toNode)
+        (Node.hasRouteTo toNode fromNode)
         RouteTableForSourceHasNoEntryForTargetAddress
 
 
 checkDestinationTable : Node -> Node -> Connectivity
 checkDestinationTable fromNode toNode =
     check_
-        (Node.hasRouteTo toNode fromNode)
-        RouteTableForSourceHasNoEntryForTargetAddress
+        (Node.hasRouteTo fromNode toNode)
+        RouteTableForDestinationHasNoEntryForSourceAddress
 
 
 

@@ -10,9 +10,9 @@ import Vpc.RouteTable as RouteTable exposing (RouteTable)
 
 localTable : RouteTable
 localTable =
-    RouteTable.build []
+    RouteTable.build [] "rt-id"
 
 
 internetTable : RouteTable
 internetTable =
-    RouteTable.build [ ( Cidr.everywhere, RouteTable.internetGateway ) ]
+    RouteTable.build [ ( Cidr.everywhere, RouteTable.internetGateway ) ] "rt-id"

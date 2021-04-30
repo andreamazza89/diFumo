@@ -4,6 +4,7 @@ module Protocol exposing
     , decoder
     , matches
     , tcp
+    , toString
     )
 
 import Json.Decode as Json
@@ -47,6 +48,16 @@ matches this that =
 
         ( _, All ) ->
             True
+
+
+toString : Protocol -> String
+toString protocol =
+    case protocol of
+        All ->
+            "all"
+
+        Tcp ->
+            "tcp"
 
 
 

@@ -3,7 +3,7 @@ module Main exposing (main)
 import Api
 import Api.Ports as Ports exposing (AwsCredentials)
 import Browser exposing (Document)
-import Connectivity
+import Connectivity exposing (ConnectivityContext)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -22,6 +22,7 @@ import Html.Attributes
 import Node exposing (Node)
 import Port exposing (Port)
 import Protocol
+import Region exposing (Region)
 import Utils.NonEmptyList as NonEmptyList exposing (NonEmptyList)
 import Vpc exposing (Vpc)
 import Vpc.Subnet as Subnet exposing (Subnet)
@@ -214,27 +215,6 @@ credentials model =
             creds
 
 
-portSelectedDelete : Model -> String
-portSelectedDelete model =
-    case model of
-        Loading _ ->
-            "80"
-
-        WaitingForCredentials _ ->
-            "80"
-
-        Loaded loaded _ ->
-            case loaded.pathSelection of
-                NothingSelected ->
-                    "80"
-
-                SourceNode _ ->
-                    "80"
-
-                Path _ portNumber ->
-                    String.fromInt portNumber
-
-
 theWorld : Model -> Element Msg
 theWorld model =
     case model of
@@ -271,12 +251,12 @@ theWorld model =
                     }
                 ]
 
-        Loaded loaded _ ->
-            loadedView loaded loaded
+        Loaded loaded creds ->
+            loadedView loaded creds.region
 
 
-loadedView : Loaded_ -> Loaded_ -> Element Msg
-loadedView model loaded =
+loadedView : Loaded_ -> Region -> Element Msg
+loadedView loaded region =
     column
         [ width fill
         , height fill
@@ -288,8 +268,8 @@ loadedView model loaded =
             , padding Scale.small
             , spacing Scale.medium
             ]
-            [ subnets model loaded.vpcSelected
-            , connections model
+            [ subnets loaded loaded.vpcSelected
+            , connections region loaded
             ]
         ]
 
@@ -458,15 +438,15 @@ publicSubnets model vpc =
         ]
 
 
-connections : Loaded_ -> Element Msg
-connections model =
+connections : Region -> Loaded_ -> Element Msg
+connections region model =
     column
         [ width (fillPortion 2)
         , height fill
         , spacing Scale.large
         ]
         [ internet model
-        , connectivityPanel model
+        , connectivityPanel region model
         ]
 
 
@@ -481,8 +461,8 @@ internet model =
         ]
 
 
-connectivityPanel : Loaded_ -> Element Msg
-connectivityPanel ({ pathSelection, portSelected } as loaded) =
+connectivityPanel : Region -> Loaded_ -> Element Msg
+connectivityPanel region ({ pathSelection, portSelected } as loaded) =
     column
         [ Background.color Colors.lightGrey
         , spacing Scale.large
@@ -496,7 +476,7 @@ connectivityPanel ({ pathSelection, portSelected } as loaded) =
         , destinationNode2 pathSelection
         , selectPort2 portSelected
         , selectProtocol
-        , connectivityIssues loaded
+        , connectivityIssues region loaded
         ]
 
 
@@ -560,56 +540,14 @@ selectProtocol =
         ]
 
 
-connectivityIssues { pathSelection, portSelected } =
+connectivityIssues : Region -> Loaded_ -> Element Msg
+connectivityIssues region { pathSelection, portSelected } =
     case ( pathSelection, Port.fromString portSelected ) of
         ( Path path _, Just port_ ) ->
-            showConnectionInfo path port_
+            showConnectionInfo region path port_
 
         ( _, _ ) ->
             none
-
-
-
---case loaded.pathSelection of
---    NothingSelected ->
---        column [ width fill, height fill, spacing 30 ]
---            [ topBar
---            , row
---                [ width fill
---                , height fill
---                , spacing 10
---                ]
---                [ viewVpcs loaded
---                , internetNode loaded
---                ]
---            ]
---
---    SourceNode _ ->
---        column [ width fill, height fill, spacing 30 ]
---            [ topBar
---            , row
---                [ width fill
---                , height fill
---                , spacing 10
---                ]
---                [ viewVpcs loaded
---                , internetNode loaded
---                ]
---            ]
---
---    Path path forPort ->
---        column [ width fill, height fill, spacing 30 ]
---            [ topBar
---            , row
---                [ width fill
---                , height fill
---                , spacing 10
---                ]
---                [ viewVpcs loaded
---                , internetNode loaded
---                ]
---            , showConnectionInfo path forPort model
---            ]
 
 
 topBar : Element Msg
@@ -641,18 +579,17 @@ selectRegion =
     text "region selection"
 
 
-showConnectionInfo : { a | from : Node, to : Node } -> Port -> Element Msg
-showConnectionInfo path forPort =
+showConnectionInfo : Region -> { a | from : Node, to : Node } -> Port -> Element Msg
+showConnectionInfo region path forPort =
     let
-        connectivity =
-            Connectivity.check
-                { fromNode = path.from
-                , toNode = path.to
-                , forProtocol = Protocol.tcp
-                , overPort = forPort
-                }
+        connectivityContext =
+            { fromNode = path.from
+            , toNode = path.to
+            , forProtocol = Protocol.tcp
+            , overPort = forPort
+            }
     in
-    case connectivity of
+    case Connectivity.check connectivityContext of
         Connectivity.Possible ->
             column [ width fill ]
                 [ Text.text [ Font.size 44, centerX ] "👍"
@@ -661,47 +598,41 @@ showConnectionInfo path forPort =
         Connectivity.NotPossible connectionIssues ->
             column [ spacing Scale.medium ]
                 (Text.header [] "🎺 Connectivity issues "
-                    :: viewIssues connectionIssues
+                    :: viewIssues region connectivityContext connectionIssues
                 )
 
 
-selectPort : Model -> Element Msg
-selectPort model =
-    Input.text []
-        { onChange = PortTyped
-        , text = portSelectedDelete model
-        , placeholder = Nothing
-        , label = Input.labelHidden "select-port"
-        }
+viewIssues : Region -> ConnectivityContext -> List Connectivity.ConnectionIssue -> List (Element Msg)
+viewIssues region connectivityContext =
+    List.map (viewIssue region connectivityContext)
 
 
-viewIssues : List Connectivity.ConnectionIssue -> List (Element Msg)
-viewIssues =
-    List.map viewIssue
-
-
-viewIssue : Connectivity.ConnectionIssue -> Element Msg
-viewIssue issue =
+viewIssue : Region -> ConnectivityContext -> Connectivity.ConnectionIssue -> Element Msg
+viewIssue region context issue =
     paragraph
         [ Border.width 1
         , Border.rounded 5
         , padding Scale.small
         , Background.color Colors.olive
         ]
-        [ column [ spacing Scale.small ] (viewIssue_ issue) ]
+        [ column [ spacing Scale.small ] (viewIssue_ region context issue) ]
 
 
-viewIssue_ : Connectivity.ConnectionIssue -> List (Element msg)
-viewIssue_ issue =
-    [ issueHeadline (Hints.forIssue issue).headline
-    , Text.smallText [] (Hints.forIssue issue).description
+viewIssue_ : Region -> ConnectivityContext -> Connectivity.ConnectionIssue -> List (Element msg)
+viewIssue_ region context issue =
+    let
+        hints =
+            Hints.forIssue region context issue
+    in
+    [ issueHeadline hints.headline
+    , Text.smallText [] hints.description
     , column [ spacing Scale.verySmall ]
         [ Text.smallText [ Font.bold ] "Potential fix: "
-        , Text.smallText [] (Hints.forIssue issue).suggestedFix
+        , Text.smallText [] hints.suggestedFix
         ]
     , newTabLink []
-        { url = "https://google.com"
-        , label = Text.smallText [ Font.underline ] "Link to console (new tab)"
+        { url = hints.link
+        , label = Text.smallText [ Font.underline ] "Link to aws console (new tab)"
         }
     ]
 
@@ -709,90 +640,6 @@ viewIssue_ issue =
 issueHeadline : String -> Element msg
 issueHeadline =
     Text.smallText [ Font.bold ]
-
-
-internetNode : Loaded_ -> Element Msg
-internetNode model =
-    let
-        attributes att =
-            if isSelected Node.internet model then
-                [ Background.color (rgb 0.6 0.9 0.4) ] ++ att
-
-            else
-                [ pointer, onClick (NodeClicked Node.internet) ] ++ att
-    in
-    el
-        (attributes
-            [ Border.width 2
-            , Border.rounded 10
-            , padding 5
-            ]
-        )
-        (text "internet")
-
-
-viewVpcs : Loaded_ -> Element Msg
-viewVpcs model =
-    List.map (viewVpc model) model.otherVpcs
-        |> column [ width fill, height fill ]
-
-
-viewVpc : Loaded_ -> Vpc -> Element Msg
-viewVpc model vpc =
-    column
-        [ width fill
-        , height fill
-        , Border.width 2
-        , spacing 15
-        , padding 10
-        ]
-        [ text ("vpc: " ++ Vpc.idAsString vpc)
-        , viewSubnets model (Vpc.subnets vpc)
-        ]
-
-
-viewSubnets : Loaded_ -> List Subnet -> Element Msg
-viewSubnets model =
-    List.map (viewSubnet model) >> column [ spacing 5, width fill, height fill ]
-
-
-viewSubnet : Loaded_ -> Subnet -> Element Msg
-viewSubnet model subnet_ =
-    column
-        [ Border.width 2
-        , Background.color (rgb 0 0.5 0)
-        , width fill
-        , padding 10
-        , spacing 10
-        ]
-        [ text ("subnet: " ++ Subnet.idAsString subnet_)
-        , viewNodes model (Subnet.nodes subnet_)
-        ]
-
-
-viewNodes : Loaded_ -> List Node -> Element Msg
-viewNodes model =
-    List.map (viewNode model) >> row [ spacing 5 ]
-
-
-viewNode : Loaded_ -> Node -> Element Msg
-viewNode model node_ =
-    let
-        attributes att =
-            if isSelected node_ model then
-                [ Background.color (rgb 0.6 0.9 0.4) ] ++ att
-
-            else
-                [ pointer, onClick (NodeClicked node_) ] ++ att
-    in
-    el
-        (attributes
-            [ Border.width 2
-            , Border.rounded 10
-            , padding 5
-            ]
-        )
-        (text ("ec2  " ++ Node.idAsString node_))
 
 
 isSelected : Node -> Loaded_ -> Bool

@@ -32,7 +32,7 @@ const {ports} = Elm.Main.init({
     node: document.querySelector('main')
 })
 
-ports.fetchAwsData.subscribe(creds => {
+ports.fetchAwsData_.subscribe(creds => {
         buildAwsClient(environment, creds, ports.awsDataReceived.send)
             .fetchIt()
     }

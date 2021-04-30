@@ -29,6 +29,7 @@ builder =
     , routeTable = RouteTable.localTable
     , publicIp = Nothing
     , networkACL = NetworkACL.allowAll
+    , tags = []
     }
 
 
