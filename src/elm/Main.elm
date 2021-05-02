@@ -9,6 +9,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Colors as Colors
 import Element.Events exposing (onClick)
+import Element.Field.Dropdown as Dropdown
 import Element.Font as Font
 import Element.Icon.Cloud as Cloud
 import Element.Icon.Database as Database
@@ -69,6 +70,7 @@ type Msg
     | AccessKeyIdTyped String
     | SecretAccessKeyTyped String
     | SessionTokenTyped String
+    | VpcSelected (Maybe Vpc)
 
 
 init : () -> ( Model, Cmd msg )
@@ -128,6 +130,11 @@ update msg model =
 
         SessionTokenTyped token ->
             ( updateSessionToken token model, Cmd.none )
+
+        VpcSelected vpc ->
+            vpc
+                |> Maybe.map (\vpc_ -> ( changeVpc model vpc_, Cmd.none ))
+                |> Maybe.withDefault ( model, Cmd.none )
 
 
 updateSelection : Node -> Model -> Model
@@ -216,6 +223,19 @@ credentials model =
             creds
 
 
+changeVpc : Model -> Vpc -> Model
+changeVpc model newVpc =
+    case model of
+        Loading creds ->
+            Loading creds
+
+        WaitingForCredentials creds ->
+            WaitingForCredentials creds
+
+        Loaded loaded creds ->
+            Loaded { loaded | vpcSelected = newVpc } creds
+
+
 theWorld : Model -> Element Msg
 theWorld model =
     case model of
@@ -262,7 +282,7 @@ loadedView loaded region =
         [ width fill
         , height fill
         ]
-        [ topBar
+        [ topBar loaded region
         , row
             [ width fill
             , height fill
@@ -551,8 +571,8 @@ connectivityIssues region { pathSelection, portSelected } =
             none
 
 
-topBar : Element Msg
-topBar =
+topBar : Loaded_ -> Region -> Element Msg
+topBar loaded region =
     row
         [ width fill
         , Background.color Colors.darkGrey
@@ -560,7 +580,7 @@ topBar =
         , spacing Scale.large
         ]
         [ refreshButton
-        , selectVpc
+        , selectVpc loaded
         , selectRegion
         ]
 
@@ -570,9 +590,18 @@ refreshButton =
     el [ onClick RefreshClicked, pointer ] Refresh.icon
 
 
-selectVpc : Element msg
-selectVpc =
-    text "vpc selection"
+selectVpc : Loaded_ -> Element Msg
+selectVpc { vpcSelected, otherVpcs } =
+    Dropdown.view
+        { options = vpcOptions (vpcSelected :: otherVpcs)
+        , value = Just vpcSelected
+        , onChange = VpcSelected
+        }
+
+
+vpcOptions : List Vpc -> List ( Vpc, String )
+vpcOptions =
+    List.map (\vpc -> ( vpc, Vpc.idAsString vpc ))
 
 
 selectRegion : Element msg
