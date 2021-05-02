@@ -32,7 +32,7 @@ import Vpc exposing (Vpc)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main =
     Browser.document
         { init = init
@@ -40,6 +40,10 @@ main =
         , update = update
         , subscriptions = subscriptions
         }
+
+
+type alias Flags =
+    { myIp : String }
 
 
 type Model
@@ -81,8 +85,8 @@ type Msg
     | RegionSelected (Maybe Region)
 
 
-init : () -> ( Model, Cmd msg )
-init _ =
+init : Flags -> ( Model, Cmd msg )
+init flags =
     ( WaitingForCredentials Ports.emptyCredentials Nothing, Cmd.none )
 
 

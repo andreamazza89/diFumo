@@ -28,15 +28,24 @@ import loadBalancersResponse from "./aws-fixtures/describe-load-balancers.json"
 
 const environment = process.env.NODE_ENV
 
-const {ports} = Elm.Main.init({
-    node: document.querySelector('main')
-})
+fetch('https://api.ipify.org?format=json')
+    .then(a => a.json())
+    .then(ipResponse => initApp(ipResponse.ip))
+    .catch(() => initApp("5.90.148.14")) // some arbitrary ip address when we fail to hit the ip api
 
-ports.fetchAwsData_.subscribe(creds => {
-        buildAwsClient(environment, creds, ports.awsDataReceived.send, ports.failedToFetchAwsData.send)
-            .fetchIt()
-    }
-)
+function initApp(myIp) {
+    const {ports} = Elm.Main.init({
+        node: document.querySelector('main'),
+        flags: {myIp: myIp}
+    })
+
+    ports.fetchAwsData_.subscribe(creds => {
+            buildAwsClient(environment, creds, ports.awsDataReceived.send, ports.failedToFetchAwsData.send)
+                .fetchIt()
+        }
+    )
+}
+
 
 const buildAwsClient = (environment, credentials, onDataReceived, onFailedToFetchAwsData) => {
     switch (environment) {
