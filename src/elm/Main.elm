@@ -265,29 +265,44 @@ theWorld model =
                 [ Element.text "Loading...", refreshButton ]
 
         WaitingForCredentials creds ->
-            column [ width fill, spacing 30, padding 20 ]
-                [ text "Please enter your aws credentials below"
+            column
+                [ width (px 500)
+                , centerX
+                , centerY
+                , Background.color Colors.lightGrey
+                , Border.rounded 5
+                , spacing 30
+                , padding 20
+                ]
+                [ Text.header [ centerX ] "Please enter your aws credentials below"
                 , Input.text []
                     { onChange = AccessKeyIdTyped
                     , text = creds.accessKeyId
                     , placeholder = Nothing
-                    , label = Input.labelAbove [] (text "Access key")
+                    , label = Input.labelAbove [] (Text.text [] "Access key")
                     }
                 , Input.text []
                     { onChange = SecretAccessKeyTyped
                     , text = creds.secretAccessKey
                     , placeholder = Nothing
-                    , label = Input.labelAbove [] (text "Secret Access key")
+                    , label = Input.labelAbove [] (Text.text [] "Secret Access key")
                     }
                 , Input.text []
                     { onChange = SessionTokenTyped
                     , text = creds.sessionToken
                     , placeholder = Nothing
-                    , label = Input.labelAbove [] (text "Session token")
+                    , label = Input.labelAbove [] (Text.text [] "Session token")
                     }
                 , Input.button []
                     { onPress = Just SubmitCredentialsClicked
-                    , label = text "Submit"
+                    , label =
+                        Text.text
+                            [ Border.width 1
+                            , Border.rounded 4
+                            , padding Scale.small
+                            , mouseOver [ Background.color Colors.darkGrey ]
+                            ]
+                            "Submit"
                     }
                 ]
 
