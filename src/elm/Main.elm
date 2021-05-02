@@ -13,6 +13,7 @@ import Element.Font as Font
 import Element.Icon.Cloud as Cloud
 import Element.Icon.Database as Database
 import Element.Icon.LoadBalancer as LoadBalancer
+import Element.Icon.Refresh as Refresh
 import Element.Icon.Server as Server
 import Element.Input as Input
 import Element.Scale as Scale exposing (edges)
@@ -566,7 +567,7 @@ topBar =
 
 refreshButton : Element Msg
 refreshButton =
-    Input.button [] { onPress = Just RefreshClicked, label = text "Refresh" }
+    el [ onClick RefreshClicked, pointer ] Refresh.icon
 
 
 selectVpc : Element msg
