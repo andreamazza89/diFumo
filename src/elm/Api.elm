@@ -19,12 +19,13 @@ import Vpc.SecurityGroup as SecurityGroup exposing (SecurityGroup)
 import Vpc.Subnet as Subnet exposing (Subnet)
 
 
-decodeAwsData : Json.Value -> Result String (NonEmptyList Vpc)
-decodeAwsData =
-    Json.decodeValue awsDataDecoder
-        >> Result.mapError Json.errorToString
-        >> Result.andThen buildVpcs
-        >> Result.andThen NonEmptyList.fromList
+decodeAwsData : Json.Value -> Result ( Json.Value, String ) (NonEmptyList Vpc)
+decodeAwsData data =
+    Json.decodeValue awsDataDecoder data
+        |> Result.mapError Json.errorToString
+        |> Result.andThen buildVpcs
+        |> Result.andThen NonEmptyList.fromList
+        |> Result.mapError (Tuple.pair data)
 
 
 awsDataDecoder : Json.Decoder AwsData

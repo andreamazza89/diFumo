@@ -21,6 +21,8 @@ import Element.Scale as Scale exposing (edges)
 import Element.Text as Text
 import Hints
 import Html.Attributes
+import Json.Decode as Json
+import Json.Encode as Encode
 import Node exposing (Node)
 import Port exposing (Port)
 import Protocol
@@ -41,9 +43,14 @@ main =
 
 
 type Model
-    = WaitingForCredentials AwsCredentials
+    = WaitingForCredentials AwsCredentials (Maybe ErrorMessage)
     | Loading AwsCredentials
+    | DecoderFailure AwsCredentials ( Json.Value, String )
     | Loaded Loaded_ AwsCredentials
+
+
+type alias ErrorMessage =
+    String
 
 
 type alias Loaded_ =
@@ -63,8 +70,8 @@ type PathSelection
 type Msg
     = NodeClicked Node
     | PortTyped String
-    | NoOp
-    | ReceivedVpcs (Result String (NonEmptyList Vpc))
+    | FailedToFetchAwsData String
+    | ReceivedVpcs (Result ( Json.Value, String ) (NonEmptyList Vpc))
     | SubmitCredentialsClicked
     | RefreshClicked
     | AccessKeyIdTyped String
@@ -76,12 +83,15 @@ type Msg
 
 init : () -> ( Model, Cmd msg )
 init _ =
-    ( WaitingForCredentials Ports.emptyCredentials, Cmd.none )
+    ( WaitingForCredentials Ports.emptyCredentials Nothing, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Ports.awsDataReceived (Api.decodeAwsData >> ReceivedVpcs)
+    Sub.batch
+        [ Ports.awsDataReceived (Api.decodeAwsData >> ReceivedVpcs)
+        , Ports.failedToFetchAwsData FailedToFetchAwsData
+        ]
 
 
 view : Model -> Document Msg
@@ -100,8 +110,8 @@ update msg model =
         PortTyped portNumber ->
             ( updatePort portNumber model, Cmd.none )
 
-        NoOp ->
-            ( model, Cmd.none )
+        FailedToFetchAwsData message ->
+            ( WaitingForCredentials (credentials model) (Just message), Cmd.none )
 
         ReceivedVpcs (Ok vpcs) ->
             ( Loaded
@@ -114,8 +124,8 @@ update msg model =
             , Cmd.none
             )
 
-        ReceivedVpcs (Err _) ->
-            ( model, Cmd.none )
+        ReceivedVpcs (Err err) ->
+            ( DecoderFailure (credentials model) err, Cmd.none )
 
         SubmitCredentialsClicked ->
             ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
@@ -149,8 +159,8 @@ updateSelection nodeSelected model =
         Loading creds ->
             Loading creds
 
-        WaitingForCredentials creds ->
-            WaitingForCredentials creds
+        WaitingForCredentials creds error ->
+            WaitingForCredentials creds error
 
         Loaded loaded creds ->
             case loaded.pathSelection of
@@ -163,6 +173,9 @@ updateSelection nodeSelected model =
                 Path _ _ ->
                     Loaded { loaded | pathSelection = SourceNode nodeSelected } creds
 
+        DecoderFailure awsCredentials ( value, string ) ->
+            DecoderFailure awsCredentials ( value, string )
+
 
 updatePort : String -> Model -> Model
 updatePort portNumber model =
@@ -170,11 +183,14 @@ updatePort portNumber model =
         Loading creds ->
             Loading creds
 
-        WaitingForCredentials creds ->
-            WaitingForCredentials creds
+        WaitingForCredentials creds error ->
+            WaitingForCredentials creds error
 
         Loaded loaded creds ->
             Loaded { loaded | portSelected = portNumber } creds
+
+        DecoderFailure awsCredentials ( value, string ) ->
+            DecoderFailure awsCredentials ( value, string )
 
 
 updateAccessKeyId : String -> Model -> Model
@@ -183,11 +199,14 @@ updateAccessKeyId id model =
         Loading creds ->
             Loading creds
 
-        WaitingForCredentials creds ->
-            WaitingForCredentials { creds | accessKeyId = id }
+        WaitingForCredentials creds error ->
+            WaitingForCredentials { creds | accessKeyId = id } error
 
         Loaded loaded creds ->
             Loaded loaded creds
+
+        DecoderFailure awsCredentials ( value, string ) ->
+            DecoderFailure awsCredentials ( value, string )
 
 
 updateSecretAccessKey : String -> Model -> Model
@@ -196,11 +215,14 @@ updateSecretAccessKey key model =
         Loading creds ->
             Loading creds
 
-        WaitingForCredentials creds ->
-            WaitingForCredentials { creds | secretAccessKey = key }
+        WaitingForCredentials creds error ->
+            WaitingForCredentials { creds | secretAccessKey = key } error
 
         Loaded loaded creds ->
             Loaded loaded creds
+
+        DecoderFailure awsCredentials ( value, string ) ->
+            DecoderFailure awsCredentials ( value, string )
 
 
 updateSessionToken : String -> Model -> Model
@@ -209,11 +231,14 @@ updateSessionToken token model =
         Loading creds ->
             Loading creds
 
-        WaitingForCredentials creds ->
-            WaitingForCredentials { creds | sessionToken = token }
+        WaitingForCredentials creds error ->
+            WaitingForCredentials { creds | sessionToken = token } error
 
         Loaded loaded creds ->
             Loaded loaded creds
+
+        DecoderFailure awsCredentials ( value, string ) ->
+            DecoderFailure awsCredentials ( value, string )
 
 
 credentials : Model -> AwsCredentials
@@ -222,11 +247,14 @@ credentials model =
         Loading creds ->
             creds
 
-        WaitingForCredentials creds ->
+        WaitingForCredentials creds _ ->
             creds
 
         Loaded _ creds ->
             creds
+
+        DecoderFailure awsCredentials ( value, string ) ->
+            awsCredentials
 
 
 changeVpc : Model -> Vpc -> Model
@@ -235,11 +263,14 @@ changeVpc model newVpc =
         Loading creds ->
             Loading creds
 
-        WaitingForCredentials creds ->
-            WaitingForCredentials creds
+        WaitingForCredentials creds error ->
+            WaitingForCredentials creds error
 
         Loaded loaded creds ->
             Loaded { loaded | vpcSelected = newVpc } creds
+
+        DecoderFailure awsCredentials ( value, string ) ->
+            DecoderFailure awsCredentials ( value, string )
 
 
 updateRegion : Model -> Region -> Model
@@ -248,11 +279,14 @@ updateRegion model newRegion =
         Loading creds ->
             Loading { creds | region = newRegion }
 
-        WaitingForCredentials creds ->
-            WaitingForCredentials { creds | region = newRegion }
+        WaitingForCredentials creds error ->
+            WaitingForCredentials { creds | region = newRegion } error
 
         Loaded loaded creds ->
             Loaded loaded { creds | region = newRegion }
+
+        DecoderFailure awsCredentials ( value, string ) ->
+            DecoderFailure awsCredentials ( value, string )
 
 
 theWorld : Model -> Element Msg
@@ -267,7 +301,7 @@ theWorld model =
                 ]
                 [ Element.text "Loading..." ]
 
-        WaitingForCredentials creds ->
+        WaitingForCredentials creds error ->
             column
                 [ width (px 500)
                 , centerX
@@ -307,10 +341,30 @@ theWorld model =
                             ]
                             "Submit"
                     }
+                , Maybe.map
+                    (\err ->
+                        column [ spacing Scale.small ]
+                            [ Text.header [] "There was a problem fetching data from AWS: "
+                            , Text.text [] err
+                            ]
+                    )
+                    error
+                    |> Maybe.withDefault none
                 ]
 
         Loaded loaded creds ->
             loadedView loaded creds.region
+
+        DecoderFailure creds ( value, error ) ->
+            paragraph [ padding Scale.small ]
+                [ column [ spacing Scale.medium ]
+                    [ Text.header [] "🙀 Failed to decode the aws data response"
+                    , Text.text [] "Something went wrong in processing data from your aws account. It would be great if you could send us what's in the boxes below so we can take a look."
+                    , Text.text [] "However, please make sure there isn't any confidential information that you should not be sharing."
+                    , Text.smallText [ padding Scale.verySmall, Border.width 1 ] error
+                    , Text.smallText [ padding Scale.verySmall, Border.width 1 ] (Encode.encode 2 value)
+                    ]
+                ]
 
 
 loadedView : Loaded_ -> Region -> Element Msg

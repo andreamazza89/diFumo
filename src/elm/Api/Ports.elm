@@ -2,6 +2,7 @@ port module Api.Ports exposing
     ( AwsCredentials
     , awsDataReceived
     , emptyCredentials
+    , failedToFetchAwsData
     , fetchAwsData
     )
 
@@ -48,3 +49,6 @@ fetchAwsData creds =
 
 
 port fetchAwsData_ : AwsCredentials_ -> Cmd msg
+
+
+port failedToFetchAwsData : (String -> msg) -> Sub msg

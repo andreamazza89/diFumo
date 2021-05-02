@@ -33,21 +33,21 @@ const {ports} = Elm.Main.init({
 })
 
 ports.fetchAwsData_.subscribe(creds => {
-        buildAwsClient(environment, creds, ports.awsDataReceived.send)
+        buildAwsClient(environment, creds, ports.awsDataReceived.send, ports.failedToFetchAwsData.send)
             .fetchIt()
     }
 )
 
-const buildAwsClient = (environment, credentials, onDataReceived) => {
+const buildAwsClient = (environment, credentials, onDataReceived, onFailedToFetchAwsData) => {
     switch (environment) {
         case "development":
-            return awsClient(credentials, onDataReceived);
+            return awsClient(credentials, onDataReceived, onFailedToFetchAwsData);
         case "stubbed":
             return stubbedClient(onDataReceived);
     }
 }
 
-const awsClient = (credentials, onDataReceived) => (
+const awsClient = (credentials, onDataReceived, onFailedToFetchAwsData) => (
     {
         fetchIt: () => {
             const ec2Client = new EC2Client({
@@ -104,9 +104,9 @@ const awsClient = (credentials, onDataReceived) => (
                         ecsTasksResponse: ecsTasks.Tasks,
                         loadBalancersResponse: loadBalancers.LoadBalancers,
                     }
-                    console.log(awsData)
                     onDataReceived(awsData)
                 })
+                .catch(error => onFailedToFetchAwsData(error.message || "something went wrong"))
         }
     }
 )
