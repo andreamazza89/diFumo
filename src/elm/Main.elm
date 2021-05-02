@@ -260,9 +260,12 @@ theWorld model =
     case model of
         Loading _ ->
             column
-                [ width fill
+                [ padding Scale.veryLarge
+                , Background.color Colors.lightGrey
+                , width fill
+                , height fill
                 ]
-                [ Element.text "Loading...", refreshButton ]
+                [ Element.text "Loading..." ]
 
         WaitingForCredentials creds ->
             column
