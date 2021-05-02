@@ -254,7 +254,9 @@ hasRouteTo : Node -> Node -> Bool
 hasRouteTo toNode fromNode =
     case fromNode of
         Internet ->
-            True
+            routeTable toNode
+                |> Maybe.map RouteTable.isPublic
+                |> Maybe.withDefault False
 
         Vpc vpcNode _ ->
             RouteTable.hasRouteTo (ipv4Address toNode) vpcNode.routeTable

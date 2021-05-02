@@ -35,11 +35,8 @@ headline issue =
         Connectivity.MissingIngressRule ->
             "Security Group: no ingress rule for source"
 
-        Connectivity.RouteTableForSourceHasNoEntryForTargetAddress ->
+        Connectivity.RouteTableCheckFailedForSource ->
             "Route Table: no route to destination"
-
-        Connectivity.RouteTableForDestinationHasNoEntryForSourceAddress ->
-            "Route Table: no route from source"
 
         Connectivity.NodeCannotReachTheInternet ->
             "Internet connectivity: source node cannot reach the internet"
@@ -63,11 +60,8 @@ description context issue =
         Connectivity.MissingIngressRule ->
             "None of the security groups for your destination " ++ nodeInfo context.toNode ++ " allow traffic from source " ++ nodeInfo context.fromNode
 
-        Connectivity.RouteTableForSourceHasNoEntryForTargetAddress ->
-            "The route table for your source " ++ nodeInfo context.fromNode ++ " does not have an entry for your destination " ++ nodeInfo context.toNode
-
-        Connectivity.RouteTableForDestinationHasNoEntryForSourceAddress ->
-            "The route table for your destination " ++ nodeInfo context.toNode ++ " does not have an entry for your source " ++ nodeInfo context.fromNode
+        Connectivity.RouteTableCheckFailedForSource ->
+            "There is no route from your source " ++ nodeInfo context.fromNode ++ " to your destination " ++ nodeInfo context.toNode
 
         Connectivity.NodeCannotReachTheInternet ->
             "NodeCannotReachTheInternet"
@@ -91,19 +85,15 @@ fix context issue =
         Connectivity.MissingIngressRule ->
             "Add a rule to allow inbound " ++ protocol context ++ " traffic over port " ++ port_ context ++ " from the source node " ++ nodeInfo context.fromNode ++ " on one of the security groups for the destination node (" ++ securityGroups context.toNode ++ ")"
 
-        Connectivity.RouteTableForSourceHasNoEntryForTargetAddress ->
-            if Node.isInternet context.toNode then
-                "If you need to reach the internet from a node that is in private subnet, you can either do so via a NAT Gateway or by making the subnet public. Both solutions involve updating the route table " ++ routeTable context.fromNode ++ " for the subnet your source node " ++ nodeInfo context.fromNode ++ " is in"
+        Connectivity.RouteTableCheckFailedForSource ->
+            if Node.isInternet context.fromNode then
+                "If you need internet connectivity for a node that is in private subnet, you can either do so by adding a Load Balancer or making the subnet public. The latter solution involves updating the route table " ++ routeTable context.toNode ++ " for the subnet your destination node " ++ nodeInfo context.toNode ++ " is in"
+
+            else if Node.isInternet context.toNode then
+                "If you need internet connectivity for a node that is in private subnet, you can either do so via a NAT Gateway (for outbound traffic only) or by making the subnet public. Both solutions involve updating the route table " ++ routeTable context.fromNode ++ " for the subnet your source node " ++ nodeInfo context.fromNode ++ " is in"
 
             else
                 "You might need to add a rule to the route table " ++ routeTable context.fromNode ++ " for the subnet your source node is in that routes traffic to the destination " ++ nodeInfo context.toNode
-
-        Connectivity.RouteTableForDestinationHasNoEntryForSourceAddress ->
-            if Node.isInternet context.fromNode then
-                "If you need to reach a node that is in private subnet from the internet, you can either do so via a load balancer or by making the subnet public. The latter involves updating the route table " ++ routeTable context.toNode ++ " for the subnet your destination node " ++ nodeInfo context.toNode ++ " is in"
-
-            else
-                "You might need to add a rule to the route table " ++ routeTable context.toNode ++ " for the subnet your destination node is in that routes traffic from the source " ++ nodeInfo context.fromNode
 
         Connectivity.NodeCannotReachTheInternet ->
             "WIP: imagine a very useful potential fix"
@@ -128,11 +118,12 @@ link region context issue =
         Connectivity.MissingIngressRule ->
             "https://" ++ Region.id region ++ ".console.aws.amazon.com/ec2/v2/home?region=" ++ Region.id region ++ "#SecurityGroup:groupId=" ++ firstSecurityGroup context.toNode
 
-        Connectivity.RouteTableForSourceHasNoEntryForTargetAddress ->
-            "https://" ++ Region.id region ++ ".console.aws.amazon.com/vpc/home?region=" ++ Region.id region ++ "#RouteTables:routeTableId=" ++ routeTable context.fromNode
+        Connectivity.RouteTableCheckFailedForSource ->
+            if Node.isInternet context.fromNode then
+                "https://" ++ Region.id region ++ ".console.aws.amazon.com/vpc/home?region=" ++ Region.id region ++ "#RouteTables:routeTableId=" ++ routeTable context.toNode
 
-        Connectivity.RouteTableForDestinationHasNoEntryForSourceAddress ->
-            "https://" ++ Region.id region ++ ".console.aws.amazon.com/vpc/home?region=" ++ Region.id region ++ "#RouteTables:routeTableId=" ++ routeTable context.toNode
+            else
+                "https://" ++ Region.id region ++ ".console.aws.amazon.com/vpc/home?region=" ++ Region.id region ++ "#RouteTables:routeTableId=" ++ routeTable context.fromNode
 
         Connectivity.NodeCannotReachTheInternet ->
             "XX"

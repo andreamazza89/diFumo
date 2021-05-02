@@ -71,6 +71,7 @@ type Msg
     | SecretAccessKeyTyped String
     | SessionTokenTyped String
     | VpcSelected (Maybe Vpc)
+    | RegionSelected (Maybe Region)
 
 
 init : () -> ( Model, Cmd msg )
@@ -134,6 +135,11 @@ update msg model =
         VpcSelected vpc ->
             vpc
                 |> Maybe.map (\vpc_ -> ( changeVpc model vpc_, Cmd.none ))
+                |> Maybe.withDefault ( model, Cmd.none )
+
+        RegionSelected region ->
+            region
+                |> Maybe.map (updateRegion model >> (\newModel -> ( Loading (credentials newModel), Ports.fetchAwsData (credentials newModel) )))
                 |> Maybe.withDefault ( model, Cmd.none )
 
 
@@ -234,6 +240,19 @@ changeVpc model newVpc =
 
         Loaded loaded creds ->
             Loaded { loaded | vpcSelected = newVpc } creds
+
+
+updateRegion : Model -> Region -> Model
+updateRegion model newRegion =
+    case model of
+        Loading creds ->
+            Loading { creds | region = newRegion }
+
+        WaitingForCredentials creds ->
+            WaitingForCredentials { creds | region = newRegion }
+
+        Loaded loaded creds ->
+            Loaded loaded { creds | region = newRegion }
 
 
 theWorld : Model -> Element Msg
@@ -577,11 +596,11 @@ topBar loaded region =
         [ width fill
         , Background.color Colors.darkGrey
         , padding Scale.large
-        , spacing Scale.large
+        , spacing Scale.medium
         ]
         [ refreshButton
         , selectVpc loaded
-        , selectRegion
+        , selectRegion region
         ]
 
 
@@ -604,9 +623,13 @@ vpcOptions =
     List.map (\vpc -> ( vpc, Vpc.idAsString vpc ))
 
 
-selectRegion : Element msg
-selectRegion =
-    text "region selection"
+selectRegion : Region -> Element Msg
+selectRegion currentRegion =
+    Dropdown.view
+        { options = Region.options
+        , value = Just currentRegion
+        , onChange = RegionSelected
+        }
 
 
 showConnectionInfo : Region -> { a | from : Node, to : Node } -> Port -> Element Msg

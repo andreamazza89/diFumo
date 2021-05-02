@@ -23,8 +23,7 @@ type Connectivity
 type ConnectionIssue
     = MissingEgressRule
     | MissingIngressRule
-    | RouteTableForSourceHasNoEntryForTargetAddress
-    | RouteTableForDestinationHasNoEntryForSourceAddress
+    | RouteTableCheckFailedForSource
     | NodeCannotReachTheInternet
     | NodeCannotBeReachedFromTheInternet
     | NetworkACLIngressRules
@@ -103,21 +102,13 @@ checkIngressRules { fromNode, toNode, forProtocol, overPort } =
 checkRouteTables : ConnectivityContext -> Connectivity
 checkRouteTables { fromNode, toNode } =
     checkSourceTable fromNode toNode
-        |> combineWith (checkDestinationTable fromNode toNode)
 
 
 checkSourceTable : Node -> Node -> Connectivity
 checkSourceTable fromNode toNode =
     check_
         (Node.hasRouteTo toNode fromNode)
-        RouteTableForSourceHasNoEntryForTargetAddress
-
-
-checkDestinationTable : Node -> Node -> Connectivity
-checkDestinationTable fromNode toNode =
-    check_
-        (Node.hasRouteTo fromNode toNode)
-        RouteTableForDestinationHasNoEntryForSourceAddress
+        RouteTableCheckFailedForSource
 
 
 
