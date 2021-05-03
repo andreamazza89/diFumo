@@ -60,17 +60,17 @@ const awsClient = (credentials, onDataReceived, onFailedToFetchAwsData) => (
     {
         fetchIt: () => {
             const ec2Client = new EC2Client({
-                region: "eu-west-1",
+                region: credentials.region,
                 credentials: credentials
             });
 
             const rdsClient = new RDSClient({
-                region: "eu-west-1",
+                region: credentials.region,
                 credentials: credentials
             });
 
             const elbClient = new ElasticLoadBalancingV2({
-                region: "eu-west-1",
+                region: credentials.region,
                 credentials: credentials
             });
 
@@ -145,7 +145,7 @@ const stubbedClient = (onDataReceived) => (
 
 function getTheEcs(credentials) {
     const client = new ECSClient({
-        region: "eu-west-1",
+        region: credentials.region,
         credentials: credentials
     });
 

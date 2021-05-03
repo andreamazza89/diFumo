@@ -271,7 +271,7 @@ changeVpc model newVpc =
             WaitingForCredentials creds error
 
         Loaded loaded creds ->
-            Loaded { loaded | vpcSelected = newVpc } creds
+            Loaded { loaded | vpcSelected = newVpc, otherVpcs = loaded.vpcSelected :: List.filter (Vpc.equals newVpc >> not) loaded.otherVpcs } creds
 
         DecoderFailure awsCredentials ( value, string ) ->
             DecoderFailure awsCredentials ( value, string )
@@ -686,12 +686,17 @@ refreshButton =
 
 
 selectVpc : Loaded_ -> Element Msg
-selectVpc { vpcSelected, otherVpcs } =
+selectVpc ({ vpcSelected, otherVpcs } as loaded) =
     Dropdown.view
-        { options = vpcOptions (vpcSelected :: otherVpcs)
+        { options = vpcOptions (allVpcs loaded)
         , value = Just vpcSelected
         , onChange = VpcSelected
         }
+
+
+allVpcs : Loaded_ -> List Vpc
+allVpcs { vpcSelected, otherVpcs } =
+    List.sortBy Vpc.idAsString (vpcSelected :: otherVpcs)
 
 
 vpcOptions : List Vpc -> List ( Vpc, String )

@@ -2,10 +2,10 @@ module Vpc exposing
     ( Id
     , Vpc
     , build
+    , equals
     , idAsString
     , privateSubnets
     , publicSubnets
-    , subnets
     )
 
 import Vpc.Subnet as Subnet exposing (Subnet)
@@ -30,9 +30,9 @@ type Id
 -- Query
 
 
-subnets : Vpc -> List Subnet
-subnets (Vpc vpc_) =
-    vpc_.subnets
+id : Vpc -> Id
+id (Vpc vpc_) =
+    vpc_.id
 
 
 privateSubnets : Vpc -> List Subnet
@@ -46,10 +46,15 @@ publicSubnets (Vpc vpc_) =
 
 
 idAsString : Vpc -> String
-idAsString (Vpc { id }) =
-    case id of
+idAsString vpc =
+    case id vpc of
         Id id_ ->
             id_
+
+
+equals : Vpc -> Vpc -> Bool
+equals one theOther =
+    id one == id theOther
 
 
 
@@ -57,8 +62,8 @@ idAsString (Vpc { id }) =
 
 
 build : String -> List Subnet -> Vpc
-build id subnets_ =
+build id_ subnets_ =
     Vpc
-        { id = Id id
+        { id = Id id_
         , subnets = subnets_
         }
