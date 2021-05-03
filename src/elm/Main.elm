@@ -46,11 +46,17 @@ type alias Flags =
     { myIp : String }
 
 
-type Model
-    = WaitingForCredentials AwsCredentials (Maybe ErrorMessage)
-    | Loading AwsCredentials
-    | DecoderFailure AwsCredentials ( Json.Value, String )
-    | Loaded Loaded_ AwsCredentials
+type alias Model =
+    { credentials : AwsCredentials
+    , page : Page
+    }
+
+
+type Page
+    = WaitingForCredentials (Maybe ErrorMessage)
+    | Loading
+    | DecoderFailure ( Json.Value, String )
+    | Loaded Loaded_
 
 
 type alias ErrorMessage =
@@ -86,8 +92,12 @@ type Msg
 
 
 init : Flags -> ( Model, Cmd msg )
-init flags =
-    ( WaitingForCredentials Ports.emptyCredentials Nothing, Cmd.none )
+init _ =
+    ( { page = WaitingForCredentials Nothing
+      , credentials = Ports.emptyCredentials
+      }
+    , Cmd.none
+    )
 
 
 subscriptions : Model -> Sub Msg
@@ -109,42 +119,58 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NodeClicked node ->
-            ( updateSelection node model, Cmd.none )
+            ( updateNodeSelection node model, Cmd.none )
 
         PortTyped portNumber ->
             ( updatePort portNumber model, Cmd.none )
 
         FailedToFetchAwsData message ->
-            ( WaitingForCredentials (credentials model) (Just message), Cmd.none )
+            ( { model | page = WaitingForCredentials (Just message) }
+            , Cmd.none
+            )
 
         ReceivedVpcs (Ok vpcs) ->
-            ( Loaded
-                { vpcSelected = NonEmptyList.head vpcs
-                , otherVpcs = NonEmptyList.tail vpcs
-                , pathSelection = NothingSelected
-                , portSelected = Port.https |> Port.toString
-                }
-                (credentials model)
+            ( { model
+                | page =
+                    Loaded
+                        { vpcSelected = NonEmptyList.head vpcs
+                        , otherVpcs = NonEmptyList.tail vpcs
+                        , pathSelection = NothingSelected
+                        , portSelected = Port.https |> Port.toString
+                        }
+              }
             , Cmd.none
             )
 
         ReceivedVpcs (Err err) ->
-            ( DecoderFailure (credentials model) err, Cmd.none )
+            ( { model | page = DecoderFailure err }
+            , Cmd.none
+            )
 
         SubmitCredentialsClicked ->
-            ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
+            ( { model | page = Loading }
+            , Ports.fetchAwsData model.credentials
+            )
 
         RefreshClicked ->
-            ( Loading (credentials model), Ports.fetchAwsData (credentials model) )
+            ( { model | page = Loading }
+            , Ports.fetchAwsData model.credentials
+            )
 
         AccessKeyIdTyped id ->
-            ( updateAccessKeyId id model, Cmd.none )
+            ( { model | credentials = updateAccessKeyId id model.credentials }
+            , Cmd.none
+            )
 
         SecretAccessKeyTyped accessKey ->
-            ( updateSecretAccessKey accessKey model, Cmd.none )
+            ( { model | credentials = updateSecretAccessKey accessKey model.credentials }
+            , Cmd.none
+            )
 
         SessionTokenTyped token ->
-            ( updateSessionToken token model, Cmd.none )
+            ( { model | credentials = updateSessionToken token model.credentials }
+            , Cmd.none
+            )
 
         VpcSelected vpc ->
             vpc
@@ -153,150 +179,114 @@ update msg model =
 
         RegionSelected region ->
             region
-                |> Maybe.map (updateRegion model >> (\newModel -> ( Loading (credentials newModel), Ports.fetchAwsData (credentials newModel) )))
+                |> Maybe.map (\region_ -> ( updateRegion model region_, Ports.fetchAwsData (updateRegion model region_).credentials ))
                 |> Maybe.withDefault ( model, Cmd.none )
 
 
-updateSelection : Node -> Model -> Model
-updateSelection nodeSelected model =
-    case model of
-        Loading creds ->
-            Loading creds
+updateNodeSelection : Node -> Model -> Model
+updateNodeSelection nodeSelected model =
+    case model.page of
+        Loading ->
+            model
 
-        WaitingForCredentials creds error ->
-            WaitingForCredentials creds error
+        WaitingForCredentials _ ->
+            model
 
-        Loaded loaded creds ->
+        DecoderFailure _ ->
+            model
+
+        Loaded loaded ->
             case loaded.pathSelection of
                 NothingSelected ->
-                    Loaded { loaded | pathSelection = SourceNode nodeSelected } creds
+                    { model
+                        | page =
+                            Loaded
+                                { loaded | pathSelection = SourceNode nodeSelected }
+                    }
 
                 SourceNode sourceNode ->
-                    Loaded { loaded | pathSelection = Path { from = sourceNode, to = nodeSelected } 80 } creds
+                    { model
+                        | page =
+                            Loaded { loaded | pathSelection = Path { from = sourceNode, to = nodeSelected } 80 }
+                    }
 
                 Path _ _ ->
-                    Loaded { loaded | pathSelection = SourceNode nodeSelected } creds
-
-        DecoderFailure awsCredentials ( value, string ) ->
-            DecoderFailure awsCredentials ( value, string )
+                    { model
+                        | page =
+                            Loaded { loaded | pathSelection = SourceNode nodeSelected }
+                    }
 
 
 updatePort : String -> Model -> Model
 updatePort portNumber model =
-    case model of
-        Loading creds ->
-            Loading creds
+    case model.page of
+        Loading ->
+            model
 
-        WaitingForCredentials creds error ->
-            WaitingForCredentials creds error
+        WaitingForCredentials _ ->
+            model
 
-        Loaded loaded creds ->
-            Loaded { loaded | portSelected = portNumber } creds
+        DecoderFailure _ ->
+            model
 
-        DecoderFailure awsCredentials ( value, string ) ->
-            DecoderFailure awsCredentials ( value, string )
-
-
-updateAccessKeyId : String -> Model -> Model
-updateAccessKeyId id model =
-    case model of
-        Loading creds ->
-            Loading creds
-
-        WaitingForCredentials creds error ->
-            WaitingForCredentials { creds | accessKeyId = id } error
-
-        Loaded loaded creds ->
-            Loaded loaded creds
-
-        DecoderFailure awsCredentials ( value, string ) ->
-            DecoderFailure awsCredentials ( value, string )
+        Loaded loaded ->
+            { model | page = Loaded { loaded | portSelected = portNumber } }
 
 
-updateSecretAccessKey : String -> Model -> Model
-updateSecretAccessKey key model =
-    case model of
-        Loading creds ->
-            Loading creds
-
-        WaitingForCredentials creds error ->
-            WaitingForCredentials { creds | secretAccessKey = key } error
-
-        Loaded loaded creds ->
-            Loaded loaded creds
-
-        DecoderFailure awsCredentials ( value, string ) ->
-            DecoderFailure awsCredentials ( value, string )
+updateAccessKeyId : String -> AwsCredentials -> AwsCredentials
+updateAccessKeyId id creds =
+    { creds | accessKeyId = id }
 
 
-updateSessionToken : String -> Model -> Model
-updateSessionToken token model =
-    case model of
-        Loading creds ->
-            Loading creds
-
-        WaitingForCredentials creds error ->
-            WaitingForCredentials { creds | sessionToken = token } error
-
-        Loaded loaded creds ->
-            Loaded loaded creds
-
-        DecoderFailure awsCredentials ( value, string ) ->
-            DecoderFailure awsCredentials ( value, string )
+updateSecretAccessKey : String -> AwsCredentials -> AwsCredentials
+updateSecretAccessKey key creds =
+    { creds | secretAccessKey = key }
 
 
-credentials : Model -> AwsCredentials
-credentials model =
-    case model of
-        Loading creds ->
-            creds
-
-        WaitingForCredentials creds _ ->
-            creds
-
-        Loaded _ creds ->
-            creds
-
-        DecoderFailure awsCredentials ( value, string ) ->
-            awsCredentials
+updateSessionToken : String -> AwsCredentials -> AwsCredentials
+updateSessionToken token creds =
+    { creds | sessionToken = token }
 
 
 changeVpc : Model -> Vpc -> Model
 changeVpc model newVpc =
-    case model of
-        Loading creds ->
-            Loading creds
+    case model.page of
+        Loading ->
+            model
 
-        WaitingForCredentials creds error ->
-            WaitingForCredentials creds error
+        WaitingForCredentials _ ->
+            model
 
-        Loaded loaded creds ->
-            Loaded { loaded | vpcSelected = newVpc, otherVpcs = loaded.vpcSelected :: List.filter (Vpc.equals newVpc >> not) loaded.otherVpcs } creds
+        DecoderFailure _ ->
+            model
 
-        DecoderFailure awsCredentials ( value, string ) ->
-            DecoderFailure awsCredentials ( value, string )
+        Loaded loaded ->
+            { model
+                | page =
+                    Loaded
+                        { loaded
+                            | vpcSelected = newVpc
+                            , otherVpcs = loaded.vpcSelected :: List.filter (Vpc.equals newVpc >> not) loaded.otherVpcs
+                        }
+            }
 
 
 updateRegion : Model -> Region -> Model
 updateRegion model newRegion =
-    case model of
-        Loading creds ->
-            Loading { creds | region = newRegion }
-
-        WaitingForCredentials creds error ->
-            WaitingForCredentials { creds | region = newRegion } error
-
-        Loaded loaded creds ->
-            Loaded loaded { creds | region = newRegion }
-
-        DecoderFailure awsCredentials ( value, string ) ->
-            DecoderFailure awsCredentials ( value, string )
+    let
+        creds =
+            model.credentials
+    in
+    { model
+        | page = Loading
+        , credentials = { creds | region = newRegion }
+    }
 
 
 theWorld : Model -> Element Msg
 theWorld model =
-    case model of
-        Loading _ ->
+    case model.page of
+        Loading ->
             column
                 [ padding Scale.veryLarge
                 , Background.color Colors.lightGrey
@@ -305,7 +295,7 @@ theWorld model =
                 ]
                 [ Element.text "Loading..." ]
 
-        WaitingForCredentials creds error ->
+        WaitingForCredentials error ->
             column
                 [ width (px 500)
                 , centerX
@@ -318,19 +308,19 @@ theWorld model =
                 [ Text.header [ centerX ] "Please enter your aws credentials below"
                 , Input.text []
                     { onChange = AccessKeyIdTyped
-                    , text = creds.accessKeyId
+                    , text = model.credentials.accessKeyId
                     , placeholder = Nothing
                     , label = Input.labelAbove [] (Text.text [] "Access key")
                     }
                 , Input.text []
                     { onChange = SecretAccessKeyTyped
-                    , text = creds.secretAccessKey
+                    , text = model.credentials.secretAccessKey
                     , placeholder = Nothing
                     , label = Input.labelAbove [] (Text.text [] "Secret Access key")
                     }
                 , Input.text []
                     { onChange = SessionTokenTyped
-                    , text = creds.sessionToken
+                    , text = model.credentials.sessionToken
                     , placeholder = Nothing
                     , label = Input.labelAbove [] (Text.text [] "Session token")
                     }
@@ -356,10 +346,10 @@ theWorld model =
                     |> Maybe.withDefault none
                 ]
 
-        Loaded loaded creds ->
-            loadedView loaded creds.region
+        Loaded loaded ->
+            loadedView loaded model.credentials.region
 
-        DecoderFailure creds ( value, error ) ->
+        DecoderFailure ( value, error ) ->
             paragraph [ padding Scale.small ]
                 [ column [ spacing Scale.medium ]
                     [ Text.header [] "🙀 Failed to decode the aws data response"

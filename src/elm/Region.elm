@@ -5,6 +5,7 @@ type Region
     = EuWest1
     | EuWest2
     | UsEast1
+    | UsWest2
 
 
 id : Region -> String
@@ -19,10 +20,13 @@ id region =
         UsEast1 ->
             "us-east-1"
 
+        UsWest2 ->
+            "us-west-2"
+
 
 all : List Region
 all =
-    [ EuWest1, EuWest2, UsEast1 ]
+    [ EuWest1, EuWest2, UsEast1, UsWest2 ]
 
 
 options : List ( Region, String )
