@@ -5,6 +5,7 @@ module IpAddress exposing
     , madeUpV4
     , plus
     , toDecimalString
+    , toString
     , v4Decoder
     , v4FromInt
     , v4FromString
@@ -88,6 +89,36 @@ isBetween (Ipv4Address lower) (Ipv4Address upper) (Ipv4Address address) =
 toDecimalString : Ipv4Address -> String
 toDecimalString (Ipv4Address address) =
     String.fromInt address
+
+
+toString : Ipv4Address -> String
+toString (Ipv4Address address) =
+    let
+        ( forC, d ) =
+            magic address
+
+        ( forB, c ) =
+            magic forC
+
+        ( forA, b ) =
+            magic forB
+
+        ( _, a ) =
+            magic forA
+    in
+    [ a, b, c, d ]
+        |> List.map String.fromInt
+        |> String.join "."
+
+
+magic : Int -> ( Int, Int )
+magic address =
+    -- as per the steps described here: https://consciousvibes.com/tech/networking/ip-address-conversion/
+    if address >= 256 then
+        ( address // 256, address - ((address // 256) * 256) )
+
+    else
+        ( 0, address )
 
 
 

@@ -21,6 +21,7 @@ import Element.Scale as Scale exposing (edges)
 import Element.Text as Text
 import Hints
 import Html.Attributes
+import IpAddress exposing (Ipv4Address)
 import Json.Decode as Json
 import Json.Encode as Encode
 import Node exposing (Node)
@@ -48,6 +49,7 @@ type alias Flags =
 
 type alias Model =
     { credentials : AwsCredentials
+    , currentIp : Ipv4Address
     , page : Page
     }
 
@@ -92,9 +94,10 @@ type Msg
 
 
 init : Flags -> ( Model, Cmd msg )
-init _ =
+init { myIp } =
     ( { page = WaitingForCredentials Nothing
       , credentials = Ports.emptyCredentials
+      , currentIp = IpAddress.v4FromString myIp |> Maybe.withDefault IpAddress.madeUpV4
       }
     , Cmd.none
     )
@@ -347,7 +350,7 @@ theWorld model =
                 ]
 
         Loaded loaded ->
-            loadedView loaded model.credentials.region
+            loadedView loaded model.credentials.region model.currentIp
 
         DecoderFailure ( value, error ) ->
             paragraph [ padding Scale.small ]
@@ -361,8 +364,8 @@ theWorld model =
                 ]
 
 
-loadedView : Loaded_ -> Region -> Element Msg
-loadedView loaded region =
+loadedView : Loaded_ -> Region -> Ipv4Address -> Element Msg
+loadedView loaded region currentIp =
     column
         [ width fill
         , height fill
@@ -375,7 +378,7 @@ loadedView loaded region =
             , spacing Scale.medium
             ]
             [ subnets loaded loaded.vpcSelected
-            , connections region loaded
+            , connections region loaded currentIp
             ]
         ]
 
@@ -544,26 +547,26 @@ publicSubnets model vpc =
         ]
 
 
-connections : Region -> Loaded_ -> Element Msg
-connections region model =
+connections : Region -> Loaded_ -> Ipv4Address -> Element Msg
+connections region model currentIp =
     column
         [ width (fillPortion 2)
         , height fill
         , spacing Scale.large
         ]
-        [ internet model
+        [ internet currentIp model
         , connectivityPanel region model
         ]
 
 
-internet : Loaded_ -> Element Msg
-internet model =
+internet : Ipv4Address -> Loaded_ -> Element Msg
+internet currentIp model =
     row
         [ centerX
         , spacing Scale.medium
         ]
         [ viewNode2 model Node.internet
-        , Text.text [] "42 . 42 . 42. 42"
+        , Text.text [] (IpAddress.toString currentIp)
         ]
 
 
