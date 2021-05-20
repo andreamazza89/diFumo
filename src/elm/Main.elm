@@ -76,11 +76,18 @@ type alias Loaded_ =
 type PathSelection
     = NothingSelected
     | SourceNode Node
-    | Path { from : Node, to : Node } Port
+    | Path Path_
+
+
+type alias Path_ =
+    { from : Node
+    , to : Node
+    }
 
 
 type Msg
     = NodeClicked Node
+    | SwapNodesClicked Path_
     | PortTyped String
     | FailedToFetchAwsData String
     | ReceivedVpcs (Result ( Json.Value, String ) (NonEmptyList Vpc))
@@ -123,6 +130,9 @@ update msg model =
     case msg of
         NodeClicked node ->
             ( updateNodeSelection node model, Cmd.none )
+
+        SwapNodesClicked path_ ->
+            ( updateSwapNodes path_ model, Cmd.none )
 
         PortTyped portNumber ->
             ( updatePort portNumber model, Cmd.none )
@@ -210,14 +220,30 @@ updateNodeSelection nodeSelected model =
                 SourceNode sourceNode ->
                     { model
                         | page =
-                            Loaded { loaded | pathSelection = Path { from = sourceNode, to = nodeSelected } 80 }
+                            Loaded { loaded | pathSelection = Path { from = sourceNode, to = nodeSelected } }
                     }
 
-                Path _ _ ->
+                Path _ ->
                     { model
                         | page =
                             Loaded { loaded | pathSelection = SourceNode nodeSelected }
                     }
+
+
+updateSwapNodes : Path_ -> Model -> Model
+updateSwapNodes { from, to } model =
+    case model.page of
+        Loading ->
+            model
+
+        WaitingForCredentials _ ->
+            model
+
+        DecoderFailure _ ->
+            model
+
+        Loaded loaded ->
+            { model | page = Loaded { loaded | pathSelection = Path { from = to, to = from } } }
 
 
 updatePort : String -> Model -> Model
@@ -325,7 +351,7 @@ theWorld model =
                     { onChange = SessionTokenTyped
                     , text = model.credentials.sessionToken
                     , placeholder = Nothing
-                    , label = Input.labelAbove [] (Text.text [] "Session token")
+                    , label = Input.labelAbove [] (Text.text [] "Session token (optional)")
                     }
                 , Input.button []
                     { onPress = Just SubmitCredentialsClicked
@@ -583,6 +609,7 @@ connectivityPanel region ({ pathSelection, portSelected } as loaded) =
         ]
         [ sourceNode2 pathSelection
         , destinationNode2 pathSelection
+        , swapNodes pathSelection
         , selectPort2 portSelected
         , selectProtocol
         , connectivityIssues region loaded
@@ -598,7 +625,7 @@ sourceNode2 selection =
         SourceNode node ->
             readOnlyNodeField "Source node" (Just node)
 
-        Path { from } _ ->
+        Path { from } ->
             readOnlyNodeField "Source node" (Just from)
 
 
@@ -610,8 +637,28 @@ destinationNode2 selection =
         SourceNode _ ->
             readOnlyNodeField "Destination node" Nothing
 
-        Path { to } _ ->
+        Path { to } ->
             readOnlyNodeField "Destination node" (Just to)
+
+
+swapNodes : PathSelection -> Element Msg
+swapNodes selection =
+    case selection of
+        Path path ->
+            Input.button []
+                { onPress = Just (SwapNodesClicked path)
+                , label =
+                    Text.smallText
+                        [ Border.width 1
+                        , Border.rounded 4
+                        , padding Scale.verySmall
+                        , mouseOver [ Background.color Colors.darkGrey ]
+                        ]
+                        "Swap src/dest"
+                }
+
+        _ ->
+            none
 
 
 readOnlyNodeField label node =
@@ -652,7 +699,7 @@ selectProtocol =
 connectivityIssues : Region -> Loaded_ -> Element Msg
 connectivityIssues region { pathSelection, portSelected } =
     case ( pathSelection, Port.fromString portSelected ) of
-        ( Path path _, Just port_ ) ->
+        ( Path path, Just port_ ) ->
             showConnectionInfo region path port_
 
         ( _, _ ) ->
@@ -778,5 +825,5 @@ isSelected node model =
         SourceNode otherNode ->
             Node.equals node otherNode
 
-        Path { from, to } _ ->
+        Path { from, to } ->
             List.any (Node.equals node) [ from, to ]
