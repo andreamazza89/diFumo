@@ -661,12 +661,16 @@ swapNodes selection =
             none
 
 
+readOnlyNodeField : String -> Maybe Node -> Element msg
 readOnlyNodeField label node =
     column [ spacing Scale.small ]
         [ Text.fieldLabel [] label
         , Maybe.map
             (\n ->
-                row [ spacing Scale.verySmall ]
+                row
+                    [ spacing Scale.verySmall
+                    , htmlAttribute (Html.Attributes.class "scale-in-center")
+                    ]
                     [ Text.nodeLabel [] (Node.label n)
                     , Text.smallText [] ("(" ++ Node.name n ++ ")")
                     ]
