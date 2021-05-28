@@ -1,6 +1,8 @@
 # diFumo
 Visualise your AWS VPC and troubleshoot connection issues
 
+![screenshot](./docs/diFumo-screenshot.png)
+
 ## Run locally
 
 ```sh
